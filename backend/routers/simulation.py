@@ -2,30 +2,51 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from robot import RobotController
 from physics import run_simulation
+from sandbox import run_user_code, SandboxError
 
 router = APIRouter(prefix="/api", tags=["simulation"])
+
 
 class RunRequest(BaseModel):
     code: str
 
-@router.post("/run")
-def run_code(request: RunRequest):
-    if len(request.code) > 2000:
-        raise HTTPException(400, "Code too long (max 2000 chars)")
 
+class RunResponse(BaseModel):
+    frames: list
+    total_frames: int
+    console: list[str]  # print() output from user code
+
+
+@router.post("/run", response_model=RunResponse)
+def run_code(request: RunRequest):
     robot = RobotController()
 
-    # Safe execution: only expose the robot object
-    safe_globals = {"__builtins__": {}}
-    safe_locals = {"robot": robot}
-
+    # Run code in sandbox
     try:
-        exec(request.code, safe_globals, safe_locals)
+        console_output = run_user_code(request.code, robot)
+    except SandboxError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Nothing to simulate
+    if not robot.commands:
+        raise HTTPException(
+            status_code=400,
+            detail="Your code ran but didn't call any robot commands. Try robot.move(1.0, 2.0)"
+        )
+
+    # Run physics simulation
+    try:
+        frames = run_simulation(robot.commands)
     except Exception as e:
-        raise HTTPException(400, f"Code error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Simulation error: {str(e)}")
 
-    if len(robot.commands) > 50:
-        raise HTTPException(400, "Too many commands (max 50)")
+    return RunResponse(
+        frames=frames,
+        total_frames=len(frames),
+        console=console_output
+    )
 
-    frames = run_simulation(robot.commands)
-    return {"frames": frames, "total_frames": len(frames)}
+
+@router.get("/ping")
+def ping():
+    return {"status": "ok"}
