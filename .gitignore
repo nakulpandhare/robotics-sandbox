@@ -1,0 +1,17 @@
+# Python
+backend/__pycache__/
+backend/.venv/
+backend/*.pyc
+*.egg-info/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Env files
+.env
+.env.local
+backend/.env
+
+# Mac
+.DS_Store
