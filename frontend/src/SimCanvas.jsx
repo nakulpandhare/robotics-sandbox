@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
 
 const SIZE = 520;
+const SCALE = SIZE / 600; // our arena is 600px internally
 
-export default function SimCanvas({ frames }) {
+export default function SimCanvas({ frames, obstacles, start }) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
 
@@ -12,45 +13,49 @@ export default function SimCanvas({ frames }) {
     if (animRef.current) cancelAnimationFrame(animRef.current);
 
     if (!frames || frames.length === 0) {
-      drawEmpty(ctx);
+      drawEmpty(ctx, obstacles);
       return;
     }
 
+    // Build trail: sample every Nth frame so we don't store 10k points
+    const trailStep = Math.max(1, Math.floor(frames.length / 300));
+    const trail = frames
+      .filter((_, i) => i % trailStep === 0)
+      .map(f => ({ x: f.x * SCALE, y: f.y * SCALE }));
+
     let frameIndex = 0;
-    const step = Math.max(1, Math.floor(frames.length / 180));
+    const playStep = Math.max(1, Math.floor(frames.length / 180));
 
     function animate() {
-      drawFrame(ctx, frames[frameIndex]);
-      frameIndex += step;
+      const frame = frames[frameIndex];
+      drawScene(ctx, frame, trail.slice(0, Math.floor(frameIndex / trailStep)), obstacles, start);
+      frameIndex += playStep;
       if (frameIndex < frames.length) {
         animRef.current = requestAnimationFrame(animate);
       } else {
-        // Draw final frame cleanly
-        drawFrame(ctx, frames[frames.length - 1]);
+        drawScene(ctx, frames[frames.length - 1], trail, obstacles, start);
       }
     }
-    animate();
 
+    animate();
     return () => cancelAnimationFrame(animRef.current);
-  }, [frames]);
+  }, [frames, obstacles]);
 
   return (
     <canvas
       ref={canvasRef}
       width={SIZE}
       height={SIZE}
-      style={{
-        border: "1px solid #222",
-        borderRadius: 10,
-        display: "block"
-      }}
+      style={{ border: "1px solid #222", borderRadius: 10, display: "block" }}
     />
   );
 }
 
-function drawEmpty(ctx) {
+function drawEmpty(ctx, obstacles) {
   ctx.fillStyle = "#161616";
   ctx.fillRect(0, 0, SIZE, SIZE);
+  drawGrid(ctx);
+  drawObstacles(ctx, obstacles);
   ctx.fillStyle = "#2a2a2a";
   ctx.font = "13px monospace";
   ctx.textAlign = "center";
@@ -58,45 +63,100 @@ function drawEmpty(ctx) {
   ctx.fillText("Write code and click ▶ Run", SIZE / 2, SIZE / 2);
 }
 
-function drawFrame(ctx, frame) {
-  // Background
+function drawScene(ctx, frame, trail, obstacles, start) {
   ctx.fillStyle = "#161616";
   ctx.fillRect(0, 0, SIZE, SIZE);
+  drawGrid(ctx);
+  drawObstacles(ctx, obstacles);
+  if (start) drawStart(ctx, start);
+  if (trail && trail.length > 1) drawTrail(ctx, trail);
+  if (frame) drawRobot(ctx, frame);
+}
 
-  // Grid
+function drawGrid(ctx) {
   ctx.strokeStyle = "#1c1c1c";
   ctx.lineWidth = 0.5;
   for (let i = 40; i < SIZE; i += 40) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, SIZE); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(SIZE, i); ctx.stroke();
   }
+  ctx.strokeStyle = "#252525";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(2, 2, SIZE - 4, SIZE - 4);
+}
 
-  // Arena border
-  ctx.strokeStyle = "#2a2a2a";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(3, 3, SIZE - 6, SIZE - 6);
+function drawObstacles(ctx, obstacles) {
+  if (!obstacles) return;
+  for (const obs of obstacles) {
+    const x = obs.x * SCALE;
+    const y = obs.y * SCALE;
+    const w = obs.w * SCALE;
+    const h = obs.h * SCALE;
 
-  if (!frame) return;
+    // Fill
+    ctx.fillStyle = "#1e3a2f";
+    ctx.fillRect(x, y, w, h);
 
-  const { x, y, angle } = frame;
-  const rad = (angle * Math.PI) / 180;
-  const R = 18;
+    // Border
+    ctx.strokeStyle = "#22c55e44";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
 
-  // Draw trail dot (subtle)
+    // Hatching so they look solid
+    ctx.strokeStyle = "#16532d33";
+    ctx.lineWidth = 0.5;
+    for (let i = -h; i < w + h; i += 10) {
+      ctx.beginPath();
+      ctx.moveTo(x + i, y);
+      ctx.lineTo(x + i + h, y + h);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawStart(ctx, start) {
+  const x = start.x * SCALE;
+  const y = start.y * SCALE;
   ctx.beginPath();
-  ctx.arc(x, y, 3, 0, Math.PI * 2);
-  ctx.fillStyle = "#14532d";
+  ctx.arc(x, y, 6, 0, Math.PI * 2);
+  ctx.fillStyle = "#854d0e";
   ctx.fill();
+  ctx.font = "10px monospace";
+  ctx.fillStyle = "#a16207";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("START", x + 10, y);
+}
 
-  // Robot body
+function drawTrail(ctx, trail) {
+  if (trail.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(trail[0].x, trail[0].y);
+  for (let i = 1; i < trail.length; i++) {
+    ctx.lineTo(trail[i].x, trail[i].y);
+  }
+  ctx.strokeStyle = "#14532d";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawRobot(ctx, frame) {
+  const x = frame.x * SCALE;
+  const y = frame.y * SCALE;
+  const rad = (frame.angle * Math.PI) / 180;
+  const R = 14;
+
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rad);
 
-  // Glow effect
+  // Glow
   ctx.shadowColor = "#22c55e";
-  ctx.shadowBlur = 12;
+  ctx.shadowBlur = 14;
 
+  // Body
   ctx.beginPath();
   ctx.arc(0, 0, R, 0, Math.PI * 2);
   ctx.fillStyle = "#22c55e";
@@ -107,12 +167,12 @@ function drawFrame(ctx, frame) {
 
   ctx.shadowBlur = 0;
 
-  // Direction nose
+  // Nose
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(R - 2, 0);
-  ctx.strokeStyle = "#000";
-  ctx.lineWidth = 3;
+  ctx.moveTo(2, 0);
+  ctx.lineTo(R - 1, 0);
+  ctx.strokeStyle = "#052e16";
+  ctx.lineWidth = 2.5;
   ctx.lineCap = "round";
   ctx.stroke();
 

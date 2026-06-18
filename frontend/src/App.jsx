@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 import axios from "axios";
 import SimCanvas from "./SimCanvas";
 import "./index.css";
+import ApiRef from "./ApiRef";
 
 const STARTER_CODE = `# Control your robot!
 # robot.move(speed, duration)  — speed: -1.0 to 1.0
@@ -23,6 +24,8 @@ export default function App() {
   const [error, setError] = useState(null);
   const [status, setStatus] = useState("Ready");
   const [consoleOut, setConsoleOut] = useState([]);
+  const [obstacles, setObstacles] = useState([]);
+  const [start, setStart] = useState(null);
 
   async function handleRun() {
     setRunning(true);
@@ -34,6 +37,8 @@ export default function App() {
       setFrames(res.data.frames);
       setConsoleOut(res.data.console || []);
       setStatus(`Done — ${res.data.total_frames} frames`);
+      setObstacles(res.data.obstacles || []);
+      setStart(res.data.start || null);
     } catch (err) {
       const msg = err.response?.data?.detail || "Something went wrong";
       setError(msg);
@@ -172,7 +177,7 @@ export default function App() {
           padding: 20,
           gap: 12
         }}>
-          <SimCanvas frames={frames} />
+          <SimCanvas frames={frames} obstacles={obstacles} start={start} />
           <div style={{ fontSize: 12, color: "#333" }}>
             {frames.length > 0
               ? `${frames.length} frames · click Run to replay`
@@ -181,6 +186,7 @@ export default function App() {
         </div>
 
       </div>
+      <ApiRef />
     </div>
   );
 }

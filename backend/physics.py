@@ -1,78 +1,108 @@
-import Box2D
-from Box2D import b2World, b2Vec2
+import pymunk
 import math
 
-PIXELS_PER_METER = 40  # 1 meter = 40 canvas pixels
 FPS = 60
-ARENA_W = 15  # meters wide
-ARENA_H = 15  # meters tall
+ARENA_W = 600
+ARENA_H = 600
 
-def run_simulation(commands: list) -> list:
+
+def run_simulation(commands: list, obstacles: list = None) -> dict:
     """
-    Takes a list of robot commands, runs them through Box2D,
-    and returns a list of frames: [{x, y, angle}, ...]
+    Runs the physics simulation and returns frames + obstacle data
+    so the frontend can draw them.
     """
-    world = b2World(gravity=(0, 0), doSleep=True)
+    space = pymunk.Space()
+    space.gravity = (0, 0)
 
-    # Create arena walls (static bodies)
-    def make_wall(cx, cy, hw, hh):
-        body = world.CreateStaticBody(position=(cx, cy))
-        body.CreatePolygonFixture(box=(hw, hh))
+    # Arena walls
+    walls = [
+        [(0, 0), (ARENA_W, 0)],
+        [(0, ARENA_H), (ARENA_W, ARENA_H)],
+        [(0, 0), (0, ARENA_H)],
+        [(ARENA_W, 0), (ARENA_W, ARENA_H)],
+    ]
+    for a, b in walls:
+        shape = pymunk.Segment(space.static_body, a, b, 2)
+        shape.elasticity = 0.4
+        shape.friction = 0.8
+        space.add(shape)
 
-    make_wall(ARENA_W / 2, 0, ARENA_W / 2, 0.1)         # bottom
-    make_wall(ARENA_W / 2, ARENA_H, ARENA_W / 2, 0.1)   # top
-    make_wall(0, ARENA_H / 2, 0.1, ARENA_H / 2)          # left
-    make_wall(ARENA_W, ARENA_H / 2, 0.1, ARENA_H / 2)   # right
+    # Default obstacle layout if none provided
+    if obstacles is None:
+        obstacles = [
+            {"x": 200, "y": 150, "w": 80, "h": 20},
+            {"x": 350, "y": 280, "w": 20, "h": 100},
+            {"x": 150, "y": 380, "w": 100, "h": 20},
+            {"x": 420, "y": 150, "w": 20, "h": 80},
+        ]
 
-    # Create robot body (dynamic, circular)
-    robot = world.CreateDynamicBody(position=(ARENA_W / 2, ARENA_H / 2))
-    robot.CreateCircleFixture(radius=0.5, density=1.0, friction=0.3)
-    robot.linearDamping = 5.0
-    robot.angularDamping = 5.0
+    # Add obstacles as static boxes
+    for obs in obstacles:
+        cx = obs["x"] + obs["w"] / 2
+        cy = obs["y"] + obs["h"] / 2
+        hw = obs["w"] / 2
+        hh = obs["h"] / 2
+        body = pymunk.Body(body_type=pymunk.Body.STATIC)
+        body.position = (cx, cy)
+        shape = pymunk.Poly.create_box(body, (obs["w"], obs["h"]))
+        shape.elasticity = 0.4
+        shape.friction = 0.8
+        space.add(body, shape)
+
+    # Robot
+    mass = 1
+    radius = 18
+    moment = pymunk.moment_for_circle(mass, 0, radius)
+    robot_body = pymunk.Body(mass, moment)
+    robot_body.position = (80, 80)   # start top-left corner
+    robot_shape = pymunk.Circle(robot_body, radius)
+    robot_shape.elasticity = 0.4
+    robot_shape.friction = 0.8
+    space.add(robot_body, robot_shape)
 
     frames = []
-    angle_deg = 0.0  # track angle ourselves for simplicity
+    angle_deg = 0.0
+    dt = 1.0 / FPS
 
     def snapshot():
-        pos = robot.position
         frames.append({
-            "x": round(pos.x * PIXELS_PER_METER, 2),
-            "y": round(pos.y * PIXELS_PER_METER, 2),
+            "x": round(robot_body.position.x, 2),
+            "y": round(robot_body.position.y, 2),
             "angle": round(angle_deg, 2)
         })
 
-    snapshot()  # frame 0: starting position
+    snapshot()
 
     for cmd in commands:
         ctype = cmd.get("type")
 
         if ctype == "move":
-            speed = cmd["speed"] * 3.0  # m/s max
+            speed = cmd["speed"] * 130
             steps = int(cmd["duration"] * FPS)
             rad = math.radians(angle_deg)
-            vx = math.cos(rad) * speed
-            vy = math.sin(rad) * speed
-            robot.linearVelocity = b2Vec2(vx, vy)
+            robot_body.velocity = (math.cos(rad) * speed, math.sin(rad) * speed)
             for _ in range(steps):
-                world.Step(1.0 / FPS, 6, 2)
-                world.ClearForces()
+                space.step(dt)
                 snapshot()
+            robot_body.velocity = (0, 0)
 
         elif ctype == "turn":
             angle_deg += cmd["degrees"]
-            robot.linearVelocity = b2Vec2(0, 0)
-            steps = int(0.3 * FPS)  # turning takes 0.3s
+            robot_body.velocity = (0, 0)
+            steps = int(0.3 * FPS)
             for _ in range(steps):
-                world.Step(1.0 / FPS, 6, 2)
-                world.ClearForces()
+                space.step(dt)
                 snapshot()
 
         elif ctype == "wait":
-            robot.linearVelocity = b2Vec2(0, 0)
+            robot_body.velocity = (0, 0)
             steps = int(cmd["duration"] * FPS)
             for _ in range(steps):
-                world.Step(1.0 / FPS, 6, 2)
-                world.ClearForces()
+                space.step(dt)
                 snapshot()
 
-    return frames
+    return {
+        "frames": frames,
+        "obstacles": obstacles,
+        "start": {"x": 70, "y": 80}
+    }
