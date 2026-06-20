@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 const SIZE = 520;
 const SCALE = SIZE / 600; // our arena is 600px internally
 
-export default function SimCanvas({ frames, obstacles, start }) {
+export default function SimCanvas({ frames, obstacles, goal, start }) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
 
@@ -13,7 +13,7 @@ export default function SimCanvas({ frames, obstacles, start }) {
     if (animRef.current) cancelAnimationFrame(animRef.current);
 
     if (!frames || frames.length === 0) {
-      drawEmpty(ctx, obstacles);
+      drawEmpty(ctx, obstacles, goal);
       return;
     }
 
@@ -28,18 +28,18 @@ export default function SimCanvas({ frames, obstacles, start }) {
 
     function animate() {
       const frame = frames[frameIndex];
-      drawScene(ctx, frame, trail.slice(0, Math.floor(frameIndex / trailStep)), obstacles, start);
+      drawScene(ctx, frame, trail.slice(0, Math.floor(frameIndex / trailStep)), obstacles, goal, start);
       frameIndex += playStep;
       if (frameIndex < frames.length) {
         animRef.current = requestAnimationFrame(animate);
       } else {
-        drawScene(ctx, frames[frames.length - 1], trail, obstacles, start);
+        drawScene(ctx, frames[frames.length - 1], trail, obstacles, goal, start);
       }
     }
 
     animate();
     return () => cancelAnimationFrame(animRef.current);
-  }, [frames, obstacles]);
+  }, [frames, obstacles, goal]);
 
   return (
     <canvas
@@ -51,11 +51,12 @@ export default function SimCanvas({ frames, obstacles, start }) {
   );
 }
 
-function drawEmpty(ctx, obstacles) {
+function drawEmpty(ctx, obstacles, goal) {
   ctx.fillStyle = "#161616";
   ctx.fillRect(0, 0, SIZE, SIZE);
   drawGrid(ctx);
   drawObstacles(ctx, obstacles);
+  if (goal) drawGoal(ctx, goal);
   ctx.fillStyle = "#2a2a2a";
   ctx.font = "13px monospace";
   ctx.textAlign = "center";
@@ -63,11 +64,12 @@ function drawEmpty(ctx, obstacles) {
   ctx.fillText("Write code and click ▶ Run", SIZE / 2, SIZE / 2);
 }
 
-function drawScene(ctx, frame, trail, obstacles, start) {
+function drawScene(ctx, frame, trail, obstacles, goal, start) {
   ctx.fillStyle = "#161616";
   ctx.fillRect(0, 0, SIZE, SIZE);
   drawGrid(ctx);
   drawObstacles(ctx, obstacles);
+  if (goal) drawGoal(ctx, goal);
   if (start) drawStart(ctx, start);
   if (trail && trail.length > 1) drawTrail(ctx, trail);
   if (frame) drawRobot(ctx, frame);
@@ -177,4 +179,29 @@ function drawRobot(ctx, frame) {
   ctx.stroke();
 
   ctx.restore();
+}
+
+function drawGoal(ctx, goal) {
+  const x = goal.x * SCALE;
+  const y = goal.y * SCALE;
+  const w = goal.w * SCALE;
+  const h = goal.h * SCALE;
+
+  // Pulsing green fill
+  ctx.fillStyle = "#14532d55";
+  ctx.fillRect(x, y, w, h);
+
+  // Border
+  ctx.strokeStyle = "#22c55e";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 3]);
+  ctx.strokeRect(x, y, w, h);
+  ctx.setLineDash([]);
+
+  // Label
+  ctx.fillStyle = "#22c55e";
+  ctx.font = "bold 11px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("GOAL", x + w / 2, y + h / 2);
 }

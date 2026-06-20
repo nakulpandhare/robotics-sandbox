@@ -6,11 +6,7 @@ ARENA_W = 600
 ARENA_H = 600
 
 
-def run_simulation(commands: list, obstacles: list = None) -> dict:
-    """
-    Runs the physics simulation and returns frames + obstacle data
-    so the frontend can draw them.
-    """
+def run_simulation(commands: list, challenge: dict) -> dict:
     space = pymunk.Space()
     space.gravity = (0, 0)
 
@@ -27,34 +23,22 @@ def run_simulation(commands: list, obstacles: list = None) -> dict:
         shape.friction = 0.8
         space.add(shape)
 
-    # Default obstacle layout if none provided
-    if obstacles is None:
-        obstacles = [
-            {"x": 200, "y": 150, "w": 80, "h": 20},
-            {"x": 350, "y": 280, "w": 20, "h": 100},
-            {"x": 150, "y": 380, "w": 100, "h": 20},
-            {"x": 420, "y": 150, "w": 20, "h": 80},
-        ]
-
-    # Add obstacles as static boxes
-    for obs in obstacles:
-        cx = obs["x"] + obs["w"] / 2
-        cy = obs["y"] + obs["h"] / 2
-        hw = obs["w"] / 2
-        hh = obs["h"] / 2
+    # Obstacles from challenge
+    for obs in challenge.get("obstacles", []):
         body = pymunk.Body(body_type=pymunk.Body.STATIC)
-        body.position = (cx, cy)
+        body.position = (obs["x"] + obs["w"] / 2, obs["y"] + obs["h"] / 2)
         shape = pymunk.Poly.create_box(body, (obs["w"], obs["h"]))
         shape.elasticity = 0.4
         shape.friction = 0.8
         space.add(body, shape)
 
-    # Robot
+    # Robot — spawn at challenge start position
+    start = challenge["start"]
     mass = 1
     radius = 18
     moment = pymunk.moment_for_circle(mass, 0, radius)
     robot_body = pymunk.Body(mass, moment)
-    robot_body.position = (80, 80)   # start top-left corner
+    robot_body.position = (start["x"], start["y"])
     robot_shape = pymunk.Circle(robot_body, radius)
     robot_shape.elasticity = 0.4
     robot_shape.friction = 0.8
@@ -80,7 +64,10 @@ def run_simulation(commands: list, obstacles: list = None) -> dict:
             speed = cmd["speed"] * 130
             steps = int(cmd["duration"] * FPS)
             rad = math.radians(angle_deg)
-            robot_body.velocity = (math.cos(rad) * speed, math.sin(rad) * speed)
+            robot_body.velocity = (
+                math.cos(rad) * speed,
+                math.sin(rad) * speed
+            )
             for _ in range(steps):
                 space.step(dt)
                 snapshot()
@@ -89,20 +76,14 @@ def run_simulation(commands: list, obstacles: list = None) -> dict:
         elif ctype == "turn":
             angle_deg += cmd["degrees"]
             robot_body.velocity = (0, 0)
-            steps = int(0.3 * FPS)
-            for _ in range(steps):
+            for _ in range(int(0.3 * FPS)):
                 space.step(dt)
                 snapshot()
 
         elif ctype == "wait":
             robot_body.velocity = (0, 0)
-            steps = int(cmd["duration"] * FPS)
-            for _ in range(steps):
+            for _ in range(int(cmd["duration"] * FPS)):
                 space.step(dt)
                 snapshot()
 
-    return {
-        "frames": frames,
-        "obstacles": obstacles,
-        "start": {"x": 70, "y": 80}
-    }
+    return frames
