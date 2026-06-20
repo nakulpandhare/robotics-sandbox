@@ -11,7 +11,7 @@ import { saveRun, getPersonalBest, saveBot, listMyBots, togglePublic, getPublicG
 import Leaderboard from "./Leaderboard";
 
 
-const API = "http://localhost:8000/api";
+const API = import.meta.env.VITE_API_URL;
 
 const STARTER_CODE = `# Get the robot to the green goal zone!
 # robot.move(speed, duration)  — speed: -1.0 to 1.0
