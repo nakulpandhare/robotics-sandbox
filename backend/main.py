@@ -13,7 +13,10 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # we'll tighten this after deploy with your real frontend URL
+    allow_origins=[
+        "http://localhost:5173",
+        "https://robotics-sandbox.vercel.app",  # your real Vercel URL
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
