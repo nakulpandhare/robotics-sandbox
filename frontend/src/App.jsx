@@ -4,10 +4,12 @@ import axios from "axios";
 import SimCanvas from "./SimCanvas";
 import ApiRef from "./ApiRef";
 import ChallengeSelector from "./ChallengeSelector";
-import ScorePanel from "./ScorePanel";
+import ResultsDrawer from "./ResultsDrawer";
 import "./index.css";
 import Auth from "./Auth";
-import { saveRun, getPersonalBest, saveBot, listMyBots } from "./api/runs";
+import { saveRun, getPersonalBest, saveBot, listMyBots, togglePublic, getPublicGallery } from "./api/runs";
+import Leaderboard from "./Leaderboard";
+
 
 const API = "http://localhost:8000/api";
 
@@ -38,8 +40,11 @@ export default function App() {
   const [personalBest, setPersonalBest] = useState(null);
   const [myBots, setMyBots] = useState([]);
   const [botName, setBotName] = useState("");
+  const [gallery, setGallery] = useState([]);
 
-  // Load challenges on mount
+  // Drawer state: which side panel is open, if any
+  const [drawer, setDrawer] = useState(null); // null | "results" | "leaderboard"
+
   useEffect(() => {
     axios.get(`${API}/challenges`).then(res => {
       const list = res.data.challenges;
@@ -48,7 +53,11 @@ export default function App() {
     });
   }, []);
 
-  // When challenge changes, reset the canvas to show its layout
+  useEffect(() => {
+    if (!selectedChallenge) return;
+    refreshGallery();
+  }, [selectedChallenge]);
+
   useEffect(() => {
     if (!selectedChallenge) return;
     setFrames([]);
@@ -62,16 +71,30 @@ export default function App() {
   }, [selectedChallenge]);
 
   useEffect(() => {
-  if (!user || !selectedChallenge) return;
-  getPersonalBest(user, selectedChallenge.id).then(setPersonalBest);
-  listMyBots(user, selectedChallenge.id).then(setMyBots);
+    if (!user || !selectedChallenge) return;
+    getPersonalBest(user, selectedChallenge.id).then(setPersonalBest);
+    listMyBots(user, selectedChallenge.id).then(setMyBots);
   }, [user, selectedChallenge]);
+
+  async function refreshGallery() {
+    if (!selectedChallenge) return;
+    const data = await getPublicGallery(selectedChallenge.id);
+    setGallery(data);
+  }
 
   async function handleSaveBot() {
     if (!user || !botName.trim() || !selectedChallenge) return;
     await saveBot({ user, name: botName.trim(), code, challengeId: selectedChallenge.id });
     setBotName("");
     listMyBots(user, selectedChallenge.id).then(setMyBots);
+  }
+
+  async function handleTogglePublic(checked) {
+    const lastBot = myBots[0];
+    if (lastBot) {
+      await togglePublic(lastBot.id, checked);
+      await refreshGallery();
+    }
   }
 
   async function handleRun() {
@@ -92,7 +115,7 @@ export default function App() {
       setGoal(res.data.goal || null);
       setStart(res.data.start || null);
       setConsoleOut(res.data.console || []);
-      setScore(res.data.score);
+
       const result = res.data.score;
       setScore(result);
 
@@ -108,6 +131,9 @@ export default function App() {
         getPersonalBest(user, selectedChallenge.id).then(setPersonalBest);
       }
       setStatus(`Done — ${res.data.total_frames} frames`);
+      // Auto-open results drawer so the score is never missed,
+      // but it overlays rather than pushing the layout down
+      setDrawer("results");
     } catch (err) {
       const msg = err.response?.data?.detail || "Something went wrong";
       setError(msg);
@@ -121,25 +147,66 @@ export default function App() {
     <div style={{
       display: "flex", flexDirection: "column",
       height: "100vh", background: "#0f0f0f",
-      color: "#eee", fontFamily: "monospace", overflow: "hidden"
+      color: "#eee", fontFamily: "monospace", overflow: "hidden",
+      position: "relative"
     }}>
 
-      {/* Header */}
+      {/* ── Header ── */}
       <div style={{
         display: "flex", alignItems: "center", gap: 16,
         padding: "10px 20px", borderBottom: "1px solid #222", flexShrink: 0
       }}>
         <span style={{ fontSize: 17, fontWeight: 700 }}>🤖 Robotics Sandbox</span>
-        <button onClick={handleRun} disabled={running} style={{ /* ...unchanged... */ }}>
+        <button
+          onClick={handleRun}
+          disabled={running}
+          style={{
+            background: running ? "#1a1a1a" : "#22c55e",
+            color: running ? "#555" : "#000",
+            border: "1px solid " + (running ? "#333" : "#22c55e"),
+            borderRadius: 6, padding: "6px 18px",
+            fontWeight: 700, fontSize: 13,
+            cursor: running ? "not-allowed" : "pointer",
+          }}
+        >
           {running ? "⏳ Running..." : "▶ Run"}
         </button>
         <span style={{ fontSize: 12, color: "#555" }}>{status}</span>
-        <div style={{ marginLeft: "auto" }}>
+
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+          {score && (
+            <span style={{
+              fontSize: 12, color: score.passed ? "#22c55e" : "#f87171",
+              padding: "4px 10px", border: "1px solid #222", borderRadius: 6
+            }}>
+              {score.passed ? `${score.breakdown.total}/100` : "Not solved"}
+            </span>
+          )}
+          <button
+            onClick={() => setDrawer(d => d === "results" ? null : "results")}
+            style={{
+              background: drawer === "results" ? "#1a1a1a" : "transparent",
+              color: "#888", border: "1px solid #333",
+              borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer"
+            }}
+          >
+            📊 Results
+          </button>
+          <button
+            onClick={() => setDrawer(d => d === "leaderboard" ? null : "leaderboard")}
+            style={{
+              background: drawer === "leaderboard" ? "#1a1a1a" : "transparent",
+              color: "#888", border: "1px solid #333",
+              borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer"
+            }}
+          >
+            🏆 Leaderboard
+          </button>
           <Auth onUserChange={setUser} />
         </div>
       </div>
 
-      {/* Challenge selector */}
+      {/* ── Challenge selector ── */}
       <ChallengeSelector
         challenges={challenges}
         selected={selectedChallenge}
@@ -148,22 +215,22 @@ export default function App() {
 
       {personalBest && (
         <div style={{
-          padding: "6px 20px", fontSize: 12, color: "#4ade80",
+          padding: "5px 20px", fontSize: 11, color: "#4ade80",
           background: "#0a0a0a", borderBottom: "1px solid #1a1a1a"
         }}>
           Your best: {personalBest.score}/100 in {personalBest.time_taken}s
         </div>
       )}
 
-      {/* Main area */}
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      {/* ── Fixed-height workspace: editor + console + canvas ── */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
 
         {/* Left: editor + console */}
         <div style={{
           flex: 1, display: "flex", flexDirection: "column",
           minWidth: 0, borderRight: "1px solid #222"
         }}>
-          <div style={{ flex: 1, overflow: "hidden" }}>
+          <div style={{ flex: 1, overflow: "hidden", minHeight: 0 }}>
             <Editor
               height="100%"
               defaultLanguage="python"
@@ -181,19 +248,19 @@ export default function App() {
             />
           </div>
 
-          {/* Console */}
+          {/* Console — fixed small height, scrolls internally */}
           <div style={{
-            height: 150, flexShrink: 0,
+            height: 110, flexShrink: 0,
             background: "#0a0a0a", borderTop: "1px solid #222",
             display: "flex", flexDirection: "column", overflow: "hidden"
           }}>
             <div style={{
-              padding: "5px 14px", borderBottom: "1px solid #1a1a1a",
-              fontSize: 11, color: "#444", letterSpacing: "0.08em", flexShrink: 0
+              padding: "4px 14px", borderBottom: "1px solid #1a1a1a",
+              fontSize: 10, color: "#444", letterSpacing: "0.08em", flexShrink: 0
             }}>
               CONSOLE
             </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "8px 14px", fontSize: 13, lineHeight: 1.7 }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: "6px 14px", fontSize: 12, lineHeight: 1.6 }}>
               {error && <div style={{ color: "#f87171" }}>✖ {error}</div>}
               {!error && consoleOut.length === 0 && (
                 <div style={{ color: "#333" }}>No output. Click Run.</div>
@@ -207,12 +274,12 @@ export default function App() {
           </div>
         </div>
 
-        {/* Right: canvas */}
+        {/* Right: canvas — fixed width, always visible */}
         <div style={{
           width: 580, flexShrink: 0,
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
-          background: "#111", padding: 20, gap: 10
+          background: "#111", padding: 16, gap: 8, minHeight: 0
         }}>
           {selectedChallenge && (
             <div style={{ fontSize: 12, color: "#555", alignSelf: "flex-start" }}>
@@ -227,56 +294,40 @@ export default function App() {
         </div>
       </div>
 
-      {/* Score panel — shown after a run */}
-      <ScorePanel score={score} />
-
-      {user && (
-        <div style={{
-          display: "flex", gap: 8, alignItems: "center",
-          padding: "10px 20px", borderTop: "1px solid #1a1a1a", background: "#0d0d0d"
-        }}>
-          <input
-            value={botName}
-            onChange={e => setBotName(e.target.value)}
-            placeholder="Name this bot to save it..."
-            style={{
-              background: "#161616", border: "1px solid #2a2a2a", borderRadius: 6,
-              padding: "6px 10px", color: "#eee", fontSize: 12, fontFamily: "monospace", width: 220
-            }}
-          />
-          <button
-            onClick={handleSaveBot}
-            disabled={!botName.trim()}
-            style={{
-              background: "#14532d", color: "#86efac", border: "1px solid #166534",
-              borderRadius: 6, padding: "6px 14px", fontSize: 12, cursor: "pointer"
-            }}
-          >
-            Save bot
-          </button>
-          {myBots.length > 0 && (
-            <select
-              onChange={e => {
-                const bot = myBots.find(b => b.id === e.target.value);
-                if (bot) setCode(bot.code);
-              }}
-              style={{
-                background: "#161616", border: "1px solid #2a2a2a", borderRadius: 6,
-                padding: "6px 10px", color: "#888", fontSize: 12, marginLeft: 8
-              }}
-            >
-              <option value="">Load saved bot...</option>
-              {myBots.map(b => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
-          )}
-        </div>
-      )}
-
-      {/* API reference */}
+      {/* ── API reference — thin, fixed, collapsible could go here later ── */}
       <ApiRef />
+
+      {/* ── Results drawer: score, share card, save bot, gallery ── */}
+      <ResultsDrawer
+        isOpen={drawer === "results"}
+        onClose={() => setDrawer(null)}
+        score={score}
+        challengeName={selectedChallenge?.name || ""}
+        user={user}
+        botName={botName}
+        setBotName={setBotName}
+        onSaveBot={handleSaveBot}
+        myBots={myBots}
+        onLoadBot={(c) => setCode(c)}
+        onTogglePublic={handleTogglePublic}
+        gallery={gallery}
+        onLoadGalleryCode={(c) => setCode(c)}
+      />
+
+      {/* ── Leaderboard drawer ── */}
+      <LeaderboardDrawer
+        challengeId={selectedChallenge?.id}
+        isOpen={drawer === "leaderboard"}
+        onClose={() => setDrawer(null)}
+      />
 
     </div>
   );
+}
+
+// Reuse your existing Leaderboard component, just renamed for clarity here.
+// If your file is still called Leaderboard.jsx, either rename the import
+// above or keep this as a thin re-export:
+function LeaderboardDrawer(props) {
+  return <Leaderboard {...props} />;
 }

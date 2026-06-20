@@ -65,3 +65,44 @@ export async function listMyBots(user, challengeId) {
   }
   return data;
 }
+
+export async function getLeaderboard(challengeId) {
+  const { data, error } = await supabase
+    .from("leaderboard")
+    .select("user_id, score, time_taken, profiles(username, avatar_url)")
+    .eq("challenge_id", challengeId)
+    .order("score", { ascending: false })
+    .order("time_taken", { ascending: true })
+    .limit(20);
+
+  if (error) {
+    console.error("Failed to fetch leaderboard:", error.message);
+    return [];
+  }
+  return data;
+}
+
+export async function togglePublic(botId, isPublic) {
+  const { error } = await supabase
+    .from("bots")
+    .update({ is_public: isPublic })
+    .eq("id", botId);
+
+  if (error) console.error("Failed to update bot visibility:", error.message);
+}
+
+export async function getPublicGallery(challengeId) {
+  const { data, error } = await supabase
+    .from("bots")
+    .select("id, name, code, created_at, profiles(username, avatar_url)")
+    .eq("challenge_id", challengeId)
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    console.error("Failed to fetch gallery:", error.message);
+    return [];
+  }
+  return data;
+}
