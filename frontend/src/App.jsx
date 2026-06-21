@@ -9,7 +9,8 @@ import "./index.css";
 import Auth from "./Auth";
 import { saveRun, getPersonalBest, saveBot, listMyBots, togglePublic, getPublicGallery } from "./api/runs";
 import Leaderboard from "./Leaderboard";
-
+import { Routes, Route, useNavigate } from "react-router-dom";
+import LandingPage from "./LandingPage";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -23,7 +24,7 @@ robot.turn(90)
 robot.move(1.0, 3.0)
 `;
 
-export default function App() {
+function Sandbox() {
   const [code, setCode] = useState(STARTER_CODE);
   const [frames, setFrames] = useState([]);
   const [obstacles, setObstacles] = useState([]);
@@ -42,7 +43,6 @@ export default function App() {
   const [botName, setBotName] = useState("");
   const [gallery, setGallery] = useState([]);
 
-  // Drawer state: which side panel is open, if any
   const [drawer, setDrawer] = useState(null); // null | "results" | "leaderboard"
 
   useEffect(() => {
@@ -131,8 +131,6 @@ export default function App() {
         getPersonalBest(user, selectedChallenge.id).then(setPersonalBest);
       }
       setStatus(`Done — ${res.data.total_frames} frames`);
-      // Auto-open results drawer so the score is never missed,
-      // but it overlays rather than pushing the layout down
       setDrawer("results");
     } catch (err) {
       const msg = err.response?.data?.detail || "Something went wrong";
@@ -151,7 +149,6 @@ export default function App() {
       position: "relative"
     }}>
 
-      {/* ── Header ── */}
       <div style={{
         display: "flex", alignItems: "center", gap: 16,
         padding: "10px 20px", borderBottom: "1px solid #222", flexShrink: 0
@@ -206,7 +203,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* ── Challenge selector ── */}
       <ChallengeSelector
         challenges={challenges}
         selected={selectedChallenge}
@@ -222,10 +218,8 @@ export default function App() {
         </div>
       )}
 
-      {/* ── Fixed-height workspace: editor + console + canvas ── */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
 
-        {/* Left: editor + console */}
         <div style={{
           flex: 1, display: "flex", flexDirection: "column",
           minWidth: 0, borderRight: "1px solid #222"
@@ -248,7 +242,6 @@ export default function App() {
             />
           </div>
 
-          {/* Console — fixed small height, scrolls internally */}
           <div style={{
             height: 110, flexShrink: 0,
             background: "#0a0a0a", borderTop: "1px solid #222",
@@ -274,7 +267,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Right: canvas — fixed width, always visible */}
         <div style={{
           width: 580, flexShrink: 0,
           display: "flex", flexDirection: "column",
@@ -294,10 +286,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* ── API reference — thin, fixed, collapsible could go here later ── */}
       <ApiRef />
 
-      {/* ── Results drawer: score, share card, save bot, gallery ── */}
       <ResultsDrawer
         isOpen={drawer === "results"}
         onClose={() => setDrawer(null)}
@@ -314,7 +304,6 @@ export default function App() {
         onLoadGalleryCode={(c) => setCode(c)}
       />
 
-      {/* ── Leaderboard drawer ── */}
       <LeaderboardDrawer
         challengeId={selectedChallenge?.id}
         isOpen={drawer === "leaderboard"}
@@ -325,9 +314,16 @@ export default function App() {
   );
 }
 
-// Reuse your existing Leaderboard component, just renamed for clarity here.
-// If your file is still called Leaderboard.jsx, either rename the import
-// above or keep this as a thin re-export:
 function LeaderboardDrawer(props) {
   return <Leaderboard {...props} />;
+}
+
+export default function App() {
+  const navigate = useNavigate();
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage onStart={() => navigate("/sandbox")} />} />
+      <Route path="/sandbox" element={<Sandbox />} />
+    </Routes>
+  );
 }
