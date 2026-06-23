@@ -15,7 +15,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://robotics-sandbox.vercel.app",  # your real Vercel URL
+        "https://nakulpandhare.github.io",       # add this
+        "https://robotics-sandbox.vercel.app",    # keep if still using Vercel too
     ],
     allow_methods=["*"],
     allow_headers=["*"],
