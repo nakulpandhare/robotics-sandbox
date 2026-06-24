@@ -9,8 +9,10 @@ import "./index.css";
 import Auth from "./Auth";
 import { saveRun, getPersonalBest, saveBot, listMyBots, togglePublic, getPublicGallery } from "./api/runs";
 import Leaderboard from "./Leaderboard";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, useSearchParams } from "react-router-dom";
 import KarooLandingPage from "./KarooLandingPage";
+import ChallengePage from "./ChallengePage";
+import { markChallengeComplete } from "./api/progress";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -25,6 +27,10 @@ robot.move(1.0, 3.0)
 `;
 
 function Sandbox() {
+  const [searchParams] = useSearchParams();
+  const challengeFromUrl = searchParams.get("challenge");
+  const navigate = useNavigate();
+
   const [code, setCode] = useState(STARTER_CODE);
   const [frames, setFrames] = useState([]);
   const [obstacles, setObstacles] = useState([]);
@@ -42,14 +48,18 @@ function Sandbox() {
   const [myBots, setMyBots] = useState([]);
   const [botName, setBotName] = useState("");
   const [gallery, setGallery] = useState([]);
-
-  const [drawer, setDrawer] = useState(null); // null | "results" | "leaderboard"
+  const [drawer, setDrawer] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/challenges`).then(res => {
       const list = res.data.challenges;
       setChallenges(list);
-      setSelectedChallenge(list[0]);
+      if (challengeFromUrl) {
+        const target = list.find(c => c.id === challengeFromUrl);
+        setSelectedChallenge(target || list[0]);
+      } else {
+        setSelectedChallenge(list[0]);
+      }
     });
   }, []);
 
@@ -68,6 +78,10 @@ function Sandbox() {
     setError(null);
     setConsoleOut([]);
     setStatus("Ready");
+    // Load starter code from curriculum if available
+    if (selectedChallenge.starter_code) {
+      setCode(selectedChallenge.starter_code);
+    }
   }, [selectedChallenge]);
 
   useEffect(() => {
@@ -129,6 +143,12 @@ function Sandbox() {
           code,
         });
         getPersonalBest(user, selectedChallenge.id).then(setPersonalBest);
+
+        // Mark complete and unlock next challenge if passed
+        if (result.passed) {
+          const nextIds = res.data.next_challenge ? [res.data.next_challenge.id] : [];
+          await markChallengeComplete(user, selectedChallenge.id, result.score, nextIds);
+        }
       }
       setStatus(`Done — ${res.data.total_frames} frames`);
       setDrawer("results");
@@ -149,10 +169,21 @@ function Sandbox() {
       position: "relative"
     }}>
 
+      {/* Header */}
       <div style={{
         display: "flex", alignItems: "center", gap: 16,
         padding: "10px 20px", borderBottom: "1px solid #222", flexShrink: 0
       }}>
+        <button
+          onClick={() => navigate("/challenges")}
+          style={{
+            background: "transparent", border: "1px solid #333",
+            borderRadius: 6, padding: "5px 10px", color: "#666",
+            cursor: "pointer", fontSize: 12
+          }}
+        >
+          ← Challenges
+        </button>
         <span style={{ fontSize: 17, fontWeight: 700 }}>🤖 Robotics Sandbox</span>
         <button
           onClick={handleRun}
@@ -176,7 +207,7 @@ function Sandbox() {
               fontSize: 12, color: score.passed ? "#22c55e" : "#f87171",
               padding: "4px 10px", border: "1px solid #222", borderRadius: 6
             }}>
-              {score.passed ? `${score.breakdown.total}/100` : "Not solved"}
+              {score.passed ? `${score.breakdown?.total ?? score.score}/100` : "Not solved"}
             </span>
           )}
           <button
@@ -203,6 +234,7 @@ function Sandbox() {
         </div>
       </div>
 
+      {/* Challenge selector */}
       <ChallengeSelector
         challenges={challenges}
         selected={selectedChallenge}
@@ -218,8 +250,10 @@ function Sandbox() {
         </div>
       )}
 
+      {/* Main workspace */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
 
+        {/* Editor + console */}
         <div style={{
           flex: 1, display: "flex", flexDirection: "column",
           minWidth: 0, borderRight: "1px solid #222"
@@ -267,6 +301,7 @@ function Sandbox() {
           </div>
         </div>
 
+        {/* Canvas */}
         <div style={{
           width: 580, flexShrink: 0,
           display: "flex", flexDirection: "column",
@@ -275,7 +310,7 @@ function Sandbox() {
         }}>
           {selectedChallenge && (
             <div style={{ fontSize: 12, color: "#555", alignSelf: "flex-start" }}>
-              <span style={{ color: "#22c55e" }}>{selectedChallenge.name}</span>
+              <span style={{ color: "#22c55e" }}>{selectedChallenge.name || selectedChallenge.title}</span>
               <span style={{ marginLeft: 8 }}>{selectedChallenge.description}</span>
             </div>
           )}
@@ -292,7 +327,7 @@ function Sandbox() {
         isOpen={drawer === "results"}
         onClose={() => setDrawer(null)}
         score={score}
-        challengeName={selectedChallenge?.name || ""}
+        challengeName={selectedChallenge?.name || selectedChallenge?.title || ""}
         user={user}
         botName={botName}
         setBotName={setBotName}
@@ -322,7 +357,19 @@ export default function App() {
   const navigate = useNavigate();
   return (
     <Routes>
-      <Route path="/" element={<KarooLandingPage onExploreCourses={() => navigate("/sandbox")} />} />
+      <Route
+        path="/"
+        element={<KarooLandingPage onExploreCourses={() => navigate("/challenges")} />}
+      />
+      <Route
+        path="/challenges"
+        element={
+          <ChallengePage
+            onStartChallenge={(id) => navigate(`/sandbox?challenge=${id}`)}
+            onBack={() => navigate("/")}
+          />
+        }
+      />
       <Route path="/sandbox" element={<Sandbox />} />
     </Routes>
   );
