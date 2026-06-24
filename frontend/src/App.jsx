@@ -10,7 +10,7 @@ import Auth from "./Auth";
 import { saveRun, getPersonalBest, saveBot, listMyBots, togglePublic, getPublicGallery } from "./api/runs";
 import Leaderboard from "./Leaderboard";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import LandingPage from "./LandingPage";
+import KarooLandingPage from "./KarooLandingPage";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -322,7 +322,7 @@ export default function App() {
   const navigate = useNavigate();
   return (
     <Routes>
-      <Route path="/" element={<LandingPage onStart={() => navigate("/sandbox")} />} />
+      <Route path="/" element={<KarooLandingPage onExploreCourses={() => navigate("/sandbox")} />} />
       <Route path="/sandbox" element={<Sandbox />} />
     </Routes>
   );
