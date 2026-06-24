@@ -150,16 +150,6 @@ export default function KarooLandingPage({ onExploreCourses }) {
 
       {/* HERO */}
       <section style={{ padding: "80px 32px 72px", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{
-          display: "inline-flex", alignItems: "center", gap: 8,
-          background: t.amberBg, border: `1px solid ${t.amberDark}33`,
-          borderRadius: 20, padding: "5px 14px", marginBottom: 28
-        }}>
-          <span style={{ fontSize: 14 }}>📍</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: t.amber, letterSpacing: "0.05em" }}>
-            Nagpur, Maharashtra · Robotics workshops for school students
-          </span>
-        </div>
         <h1 style={{ fontSize: "clamp(42px, 7vw, 80px)", fontWeight: 900, lineHeight: 1.0, margin: "0 0 20px", maxWidth: 800 }}>
           <span style={{ color: t.text }}>Build a robot.</span><br />
           <span style={{ color: t.amber }}>Keep it forever.</span><br />
