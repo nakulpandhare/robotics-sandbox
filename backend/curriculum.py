@@ -62,6 +62,13 @@ robot.move(___, ___)  # fill in the blanks
         "is_boss": False,
         "is_team": False,
         "tags": ["function call", "arguments", "robot.move()"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "1.2": {
@@ -103,6 +110,13 @@ robot.move(0.8, 1.5)   # move forward again
         "is_boss": False,
         "is_team": False,
         "tags": ["sequencing", "robot.turn()", "angles"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "1.3": {
@@ -149,6 +163,13 @@ robot.move(___, ___)
         "is_boss": False,
         "is_team": False,
         "tags": ["float values", "precision", "tuning"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "1.4": {
@@ -190,6 +211,13 @@ robot.move(my_speed, ___)  # what duration gets you to the goal?
         "is_boss": False,
         "is_team": False,
         "tags": ["variables", "assignment", "naming"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "1.5": {
@@ -237,6 +265,13 @@ robot.move(x, z)
         "is_boss": False,
         "is_team": False,
         "tags": ["comments", "naming", "readability"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "1.6": {
@@ -287,6 +322,13 @@ print("Done — did we reach the goal?")
         "is_boss": False,
         "is_team": False,
         "tags": ["print()", "f-strings", "debugging"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "1.7": {
@@ -332,6 +374,13 @@ print("Starting the workshop route...")
         "is_boss": True,
         "is_team": False,
         "tags": ["boss level", "sequencing", "variables", "print()", "debugging"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     # ════════════════════════════════════════════════════════════
@@ -385,6 +434,13 @@ for i in range(___):   # how many sides does a square have?
         "is_boss": False,
         "is_team": False,
         "tags": ["for loop", "range()", "indentation"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "2.2": {
@@ -425,6 +481,13 @@ for i in range(5):
         "is_boss": False,
         "is_team": False,
         "tags": ["for loop", "loop variable", "f-strings"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "2.3": {
@@ -467,6 +530,13 @@ for i in range(5):
         "is_boss": False,
         "is_team": False,
         "tags": ["for loop", "math in loop", "expressions"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "2.4": {
@@ -511,6 +581,13 @@ print("Wall reached! Stopping.")
         "is_boss": False,
         "is_team": False,
         "tags": ["while loop", "sensor", "get_distance()", "conditions"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "2.5": {
@@ -557,6 +634,13 @@ for row in range(3):
         "is_boss": False,
         "is_team": False,
         "tags": ["nested loops", "2D thinking", "scanning"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "2.6": {
@@ -607,6 +691,13 @@ for i in range(10):
         "is_boss": False,
         "is_team": False,
         "tags": ["break", "continue", "loop control"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 
     "2.7": {
@@ -657,6 +748,13 @@ print("All flags collected — find the exit!")
         "is_boss": True,
         "is_team": False,
         "tags": ["boss level", "for loop", "while loop", "break", "sensors"],
+        "arena":     "open_field_near",
+        "goals":     [{"x": 460, "y": 240, "w": 70, "h": 70}],
+        "obstacles": [],
+        "flags":     [],
+        "start":     {"x": 80, "y": 285, "angle": 0},
+        "par_time":  4.0,
+        "time_limit": 12.0,
     },
 }
 

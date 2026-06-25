@@ -3,11 +3,14 @@ MAX_COMMANDS = 50
 class RobotController:
     def __init__(self):
         self.commands = []
+        self._sensor_data = {}   # injected by physics engine after each step
 
     def _add(self, cmd: dict):
         if len(self.commands) >= MAX_COMMANDS:
             raise Exception(f"Command limit reached ({MAX_COMMANDS} max). Simplify your code.")
         self.commands.append(cmd)
+
+    # ── Movement ──────────────────────────────────────────────
 
     def move(self, speed: float, duration: float = 1.0):
         """Move forward or backward.
@@ -45,3 +48,22 @@ class RobotController:
             "type": "wait",
             "duration": max(0.0, min(3.0, float(duration)))
         })
+
+    # ── Sensors ───────────────────────────────────────────────
+    # These are called DURING simulation by the physics engine.
+    # In sandbox mode they return pre-computed values injected
+    # by the simulator before user code runs each step.
+
+    def get_distance(self) -> float:
+        """Returns distance to nearest obstacle in metres (0.0 to 10.0).
+        Used in while loops: while robot.get_distance() > 0.5
+        """
+        return float(self._sensor_data.get("distance", 10.0))
+
+    def get_flag_colour(self) -> str | None:
+        """Returns colour of flag at current position: 'green', 'red', or None."""
+        return self._sensor_data.get("flag_colour", None)
+
+    def get_position(self) -> dict:
+        """Returns current position: {'x': float, 'y': float, 'angle': float}"""
+        return self._sensor_data.get("position", {"x": 300.0, "y": 300.0, "angle": 0.0})
