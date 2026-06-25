@@ -15,8 +15,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://nakulpandhare.github.io",       # add this
-        "https://robotics-sandbox.vercel.app",    # keep if still using Vercel too
+        "http://localhost:5173/robotics-sandbox",
+        "https://nakulpandhare.github.io",
+        "https://nakulpandhare.github.io/robotics-sandbox",
     ],
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,4 +27,4 @@ app.include_router(simulation.router)
 
 @app.get("/")
 def root():
-    return {"status": "ok"}
+    return {"status": "ok", "version": "2.0"}

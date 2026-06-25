@@ -143,12 +143,11 @@ export default function KarooLandingPage({ onExploreCourses }) {
               options: { redirectTo: window.location.origin + (import.meta.env.BASE_URL || "/") }
             })}
             style={{
-              fontFamily: "monospace", fontSize: 12, color: "var(--term-accent-dark)",
-              background: "var(--term-accent)", border: "none", borderRadius: 6,
-              padding: "7px 14px", cursor: "pointer"
+              background: t.amber, color: "#000", border: "none", borderRadius: 8,
+              padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer"
             }}
           >
-            Sign in with Google
+            Sign in
           </button>
         </div>
       </nav>
