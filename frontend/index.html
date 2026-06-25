@@ -2,8 +2,12 @@
 <html lang="en">
   <head>
     <script>
-      // Restore path after 404 redirect
       (function() {
+        // Handle OAuth redirect hash — don't touch it
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+          return; // let Supabase client handle it
+        }
+        // Handle 404 redirect
         var p = new URLSearchParams(window.location.search).get('p');
         if (p) {
           window.history.replaceState(null, null, '/' + decodeURIComponent(p));

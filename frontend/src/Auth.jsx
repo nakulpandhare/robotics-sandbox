@@ -21,7 +21,7 @@ export default function Auth({ onUserChange }) {
 
   async function handleLogin(provider) {
     setMenuOpen(false);
-    const redirectTo = window.location.href; // uses current page URL exactly
+    const redirectTo = import.meta.env.VITE_APP_URL || "https://nakulpandhare.github.io/robotics-sandbox/";
     await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo },

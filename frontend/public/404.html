@@ -4,12 +4,18 @@
     <meta charset="utf-8" />
     <title>Robotics Sandbox</title>
     <script>
-      // Redirect to index.html with the path encoded as a query param
-      var path = window.location.pathname;
+      var path   = window.location.pathname;
       var search = window.location.search;
-      var hash = window.location.hash;
-      var redirect = path.slice(1) + search + hash;
-      window.location.replace('/?p=' + encodeURIComponent(redirect));
+      var hash   = window.location.hash;
+      
+      // Don't redirect if this is an OAuth callback (has access_token in hash)
+      if (hash && hash.includes('access_token')) {
+        // Let the app handle it — just redirect to root with the hash preserved
+        window.location.replace('/' + hash);
+      } else {
+        var redirect = path.slice(1) + search + hash;
+        window.location.replace('/?p=' + encodeURIComponent(redirect));
+      }
     </script>
   </head>
 </html>

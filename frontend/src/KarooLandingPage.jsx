@@ -140,7 +140,7 @@ export default function KarooLandingPage({ onExploreCourses }) {
           <button
             onClick={() => supabase.auth.signInWithOAuth({
               provider: "google",
-              options: { redirectTo: window.location.origin + (import.meta.env.BASE_URL || "/") }
+              options: { redirectTo: "https://nakulpandhare.github.io/robotics-sandbox/" }
             })}
             style={{
               background: t.amber, color: "#000", border: "none", borderRadius: 8,

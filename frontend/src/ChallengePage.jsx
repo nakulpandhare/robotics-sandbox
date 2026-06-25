@@ -159,7 +159,7 @@ export default function ChallengePage({ onStartChallenge, onBack }) {
               <button
                 onClick={() => supabase.auth.signInWithOAuth({
                   provider: "github",
-                  options: { redirectTo: window.location.href }
+                  options: { redirectTo: "https://nakulpandhare.github.io/robotics-sandbox/" }
                 })}
                 style={{
                   background: "#1a1a1a", border: "0.5px solid #2a2a2a",
@@ -172,7 +172,7 @@ export default function ChallengePage({ onStartChallenge, onBack }) {
               <button
                 onClick={() => supabase.auth.signInWithOAuth({
                   provider: "google",
-                  options: { redirectTo: window.location.href }
+                  options: { redirectTo: "https://nakulpandhare.github.io/robotics-sandbox/" }
                 })}
                 style={{
                   background: "#1a1a1a", border: "0.5px solid #2a2a2a",
