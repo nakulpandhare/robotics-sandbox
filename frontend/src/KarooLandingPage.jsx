@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "./supabaseClient";
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
@@ -137,13 +138,17 @@ export default function KarooLandingPage({ onExploreCourses }) {
             {dark ? "☀️" : "🌙"}
           </button>
           <button
-            onClick={() => document.getElementById("contact").scrollIntoView({ behavior: "smooth" })}
+            onClick={() => supabase.auth.signInWithOAuth({
+              provider: "google",
+              options: { redirectTo: window.location.origin + (import.meta.env.BASE_URL || "/") }
+            })}
             style={{
-              background: t.amber, color: "#000", border: "none", borderRadius: 8,
-              padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer"
+              fontFamily: "monospace", fontSize: 12, color: "var(--term-accent-dark)",
+              background: "var(--term-accent)", border: "none", borderRadius: 6,
+              padding: "7px 14px", cursor: "pointer"
             }}
           >
-            Book a Workshop
+            Sign in with Google
           </button>
         </div>
       </nav>
