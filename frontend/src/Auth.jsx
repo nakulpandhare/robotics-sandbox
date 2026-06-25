@@ -6,14 +6,22 @@ export default function Auth({ onUserChange }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    // First check for existing session
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user || null);
       onUserChange(data.session?.user || null);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Then listen for changes — this fires when Google redirect lands
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event, session?.user?.email);  // debug line
       setUser(session?.user || null);
       onUserChange(session?.user || null);
+
+      // If just signed in, clean the URL hash
+      if (event === "SIGNED_IN" && window.location.hash.includes("access_token")) {
+        window.history.replaceState(null, null, window.location.pathname);
+      }
     });
 
     return () => listener.subscription.unsubscribe();
