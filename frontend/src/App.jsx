@@ -13,6 +13,7 @@ import { Routes, Route, useNavigate, useSearchParams } from "react-router-dom";
 import KarooLandingPage from "./KarooLandingPage";
 import ChallengePage from "./ChallengePage";
 import { markChallengeComplete } from "./api/progress";
+import ChallengeBrief from "./ChallengeBrief";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -49,6 +50,9 @@ function Sandbox() {
   const [botName, setBotName] = useState("");
   const [gallery, setGallery] = useState([]);
   const [drawer, setDrawer] = useState(null);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [hintPenalty, setHintPenalty] = useState(0);
+  const [briefOpen, setBriefOpen] = useState(true);
 
   useEffect(() => {
     axios.get(`${API}/challenges`).then(res => {
@@ -78,7 +82,8 @@ function Sandbox() {
     setError(null);
     setConsoleOut([]);
     setStatus("Ready");
-    // Load starter code from curriculum if available
+    setHintsUsed(0);           // ← reset hints
+    setHintPenalty(0);         // ← reset penalty
     if (selectedChallenge.starter_code) {
       setCode(selectedChallenge.starter_code);
     }
@@ -111,6 +116,11 @@ function Sandbox() {
     }
   }
 
+  async function handleRevealHint(index, cost) {
+    setHintsUsed(index + 1);
+    setHintPenalty(p => p + cost);
+  }
+
   async function handleRun() {
     if (!selectedChallenge) return;
     setRunning(true);
@@ -132,6 +142,12 @@ function Sandbox() {
 
       const result = res.data.score;
       setScore(result);
+
+      // Apply hint penalty to displayed score
+      if (hintPenalty > 0 && result) {
+        const penalisedScore = Math.max(0, result.score - hintPenalty);
+        setScore({ ...result, score: penalisedScore, breakdown: { ...result.breakdown, hint_penalty: hintPenalty, total: penalisedScore } });
+      }
 
       if (user && selectedChallenge) {
         await saveRun({
@@ -253,6 +269,30 @@ function Sandbox() {
       {/* Main workspace */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
 
+        {/* Brief panel toggle button */}
+        <button
+          onClick={() => setBriefOpen(o => !o)}
+          title={briefOpen ? "Hide brief" : "Show brief"}
+          style={{
+            width: 20, flexShrink: 0, background: "#0d0d0d",
+            border: "none", borderRight: "1px solid #1a1a1a",
+            cursor: "pointer", color: "#444", fontSize: 10,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            writingMode: "vertical-rl"
+          }}
+        >
+          {briefOpen ? "◀" : "▶"}
+        </button>
+
+        {/* Challenge brief */}
+        {briefOpen && (
+          <ChallengeBrief
+            challenge={selectedChallenge}
+            hintsUsed={hintsUsed}
+            onRevealHint={handleRevealHint}
+          />
+        )}
+
         {/* Editor + console */}
         <div style={{
           flex: 1, display: "flex", flexDirection: "column",
@@ -276,6 +316,7 @@ function Sandbox() {
             />
           </div>
 
+          {/* Console */}
           <div style={{
             height: 110, flexShrink: 0,
             background: "#0a0a0a", borderTop: "1px solid #222",
@@ -286,6 +327,11 @@ function Sandbox() {
               fontSize: 10, color: "#444", letterSpacing: "0.08em", flexShrink: 0
             }}>
               CONSOLE
+              {hintPenalty > 0 && (
+                <span style={{ marginLeft: 12, color: "#f59e0b", fontSize: 10 }}>
+                  hint penalty: -{hintPenalty} pts
+                </span>
+              )}
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "6px 14px", fontSize: 12, lineHeight: 1.6 }}>
               {error && <div style={{ color: "#f87171" }}>✖ {error}</div>}
@@ -303,15 +349,14 @@ function Sandbox() {
 
         {/* Canvas */}
         <div style={{
-          width: 580, flexShrink: 0,
+          width: 520, flexShrink: 0,
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
           background: "#111", padding: 16, gap: 8, minHeight: 0
         }}>
           {selectedChallenge && (
-            <div style={{ fontSize: 12, color: "#555", alignSelf: "flex-start" }}>
-              <span style={{ color: "#22c55e" }}>{selectedChallenge.name || selectedChallenge.title}</span>
-              <span style={{ marginLeft: 8 }}>{selectedChallenge.description}</span>
+            <div style={{ fontSize: 11, color: "#555", alignSelf: "flex-start" }}>
+              <span style={{ color: "#5DCAA5" }}>{selectedChallenge.title || selectedChallenge.name}</span>
             </div>
           )}
           <SimCanvas frames={frames} obstacles={obstacles} goal={goal} start={start} />
@@ -319,6 +364,7 @@ function Sandbox() {
             {frames.length > 0 ? `${frames.length} frames` : "waiting for run"}
           </div>
         </div>
+
       </div>
 
       <ApiRef />
