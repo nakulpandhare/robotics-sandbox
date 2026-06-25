@@ -21,11 +21,10 @@ export default function Auth({ onUserChange }) {
 
   async function handleLogin(provider) {
     setMenuOpen(false);
+    const redirectTo = window.location.href; // uses current page URL exactly
     await supabase.auth.signInWithOAuth({
       provider,
-      options: {
-        redirectTo: window.location.origin + (import.meta.env.BASE_URL || "/"),
-      },
+      options: { redirectTo },
     });
   }
 
@@ -70,9 +69,13 @@ export default function Auth({ onUserChange }) {
 
         {menuOpen && (
           <div style={{
-            position: "absolute", right: 0, top: "calc(100% + 6px)",
+            position: "fixed", 
+            right: 16,
+            top: 56,
             background: "#111", border: "1px solid #222",
-            borderRadius: 8, padding: 8, minWidth: 160, zIndex: 50
+            borderRadius: 8, padding: 8, minWidth: 200,
+            zIndex: 9999,
+            display: "flex", flexDirection: "column", gap: 6
           }}>
             <div style={{ padding: "6px 10px", fontSize: 11, color: "#555", borderBottom: "1px solid #1a1a1a", marginBottom: 6 }}>
               {user.email}
