@@ -53,6 +53,8 @@ function Sandbox() {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [hintPenalty, setHintPenalty] = useState(0);
   const [briefOpen, setBriefOpen] = useState(true);
+  const [goals, setGoals]   = useState([]);
+  const [flags, setFlags]   = useState([]);
 
   useEffect(() => {
     axios.get(`${API}/challenges`).then(res => {
@@ -76,14 +78,16 @@ function Sandbox() {
     if (!selectedChallenge) return;
     setFrames([]);
     setObstacles(selectedChallenge.obstacles || []);
-    setGoal(selectedChallenge.goal || null);
+    setGoals(selectedChallenge.goals || []);
+    setFlags(selectedChallenge.flags || []);
+    setGoal(selectedChallenge.goals?.[0] || null);
     setStart(selectedChallenge.start || null);
     setScore(null);
     setError(null);
     setConsoleOut([]);
     setStatus("Ready");
-    setHintsUsed(0);           // ← reset hints
-    setHintPenalty(0);         // ← reset penalty
+    setHintsUsed(0);
+    setHintPenalty(0);
     if (selectedChallenge.starter_code) {
       setCode(selectedChallenge.starter_code);
     }
@@ -136,9 +140,10 @@ function Sandbox() {
       });
       setFrames(res.data.frames);
       setObstacles(res.data.obstacles || []);
-      setGoal(res.data.goal || null);
+      setGoals(res.data.goals || []);
+      setFlags(res.data.flags || []);
+      setGoal(res.data.goal || res.data.goals?.[0] || null);
       setStart(res.data.start || null);
-      setConsoleOut(res.data.console || []);
 
       const result = res.data.score;
       setScore(result);
@@ -359,7 +364,14 @@ function Sandbox() {
               <span style={{ color: "#5DCAA5" }}>{selectedChallenge.title || selectedChallenge.name}</span>
             </div>
           )}
-          <SimCanvas frames={frames} obstacles={obstacles} goal={goal} start={start} />
+          <SimCanvas
+            frames={frames}
+            obstacles={obstacles}
+            goal={goal}
+            goals={goals}
+            flags={flags}
+            start={start}
+          />
           <div style={{ fontSize: 11, color: "#2a2a2a" }}>
             {frames.length > 0 ? `${frames.length} frames` : "waiting for run"}
           </div>

@@ -1,23 +1,25 @@
 import { useEffect, useRef } from "react";
 
 const SIZE = 520;
-const SCALE = SIZE / 600; // our arena is 600px internally
+const SCALE = SIZE / 600;
 
-export default function SimCanvas({ frames, obstacles, goal, start }) {
+export default function SimCanvas({ frames, obstacles, goal, goals, flags, start }) {
   const canvasRef = useRef(null);
-  const animRef = useRef(null);
+  const animRef   = useRef(null);
+
+  // Normalise: always work with an array of goals
+  const allGoals = goals?.length ? goals : (goal && goal.w ? [goal] : []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx    = canvas.getContext("2d");
     if (animRef.current) cancelAnimationFrame(animRef.current);
 
     if (!frames || frames.length === 0) {
-      drawEmpty(ctx, obstacles, goal);
+      drawEmpty(ctx, obstacles, allGoals, flags, start);
       return;
     }
 
-    // Build trail: sample every Nth frame so we don't store 10k points
     const trailStep = Math.max(1, Math.floor(frames.length / 300));
     const trail = frames
       .filter((_, i) => i % trailStep === 0)
@@ -28,18 +30,17 @@ export default function SimCanvas({ frames, obstacles, goal, start }) {
 
     function animate() {
       const frame = frames[frameIndex];
-      drawScene(ctx, frame, trail.slice(0, Math.floor(frameIndex / trailStep)), obstacles, goal, start);
+      drawScene(ctx, frame, trail.slice(0, Math.floor(frameIndex / trailStep)), obstacles, allGoals, flags, start);
       frameIndex += playStep;
       if (frameIndex < frames.length) {
         animRef.current = requestAnimationFrame(animate);
       } else {
-        drawScene(ctx, frames[frames.length - 1], trail, obstacles, goal, start);
+        drawScene(ctx, frames[frames.length - 1], trail, obstacles, allGoals, flags, start);
       }
     }
-
     animate();
     return () => cancelAnimationFrame(animRef.current);
-  }, [frames, obstacles, goal]);
+  }, [frames, obstacles, allGoals, flags]);
 
   return (
     <canvas
@@ -51,27 +52,32 @@ export default function SimCanvas({ frames, obstacles, goal, start }) {
   );
 }
 
-function drawEmpty(ctx, obstacles, goal) {
+function drawEmpty(ctx, obstacles, goals, flags, start) {
   ctx.fillStyle = "#161616";
   ctx.fillRect(0, 0, SIZE, SIZE);
   drawGrid(ctx);
   drawObstacles(ctx, obstacles);
-  if (goal) drawGoal(ctx, goal);
+  goals?.forEach(g => drawGoal(ctx, g));
+  flags?.forEach(f => drawFlag(ctx, f));
+  if (start) drawStart(ctx, start);
   ctx.fillStyle = "#2a2a2a";
   ctx.font = "13px monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("Write code and click ▶ Run", SIZE / 2, SIZE / 2);
+  if (!goals?.length && !obstacles?.length) {
+    ctx.fillText("Write code and click ▶ Run", SIZE / 2, SIZE / 2);
+  }
 }
 
-function drawScene(ctx, frame, trail, obstacles, goal, start) {
+function drawScene(ctx, frame, trail, obstacles, goals, flags, start) {
   ctx.fillStyle = "#161616";
   ctx.fillRect(0, 0, SIZE, SIZE);
   drawGrid(ctx);
   drawObstacles(ctx, obstacles);
-  if (goal) drawGoal(ctx, goal);
+  goals?.forEach(g => drawGoal(ctx, g));
+  flags?.forEach(f => drawFlag(ctx, f));
   if (start) drawStart(ctx, start);
-  if (trail && trail.length > 1) drawTrail(ctx, trail);
+  if (trail?.length > 1) drawTrail(ctx, trail);
   if (frame) drawRobot(ctx, frame);
 }
 
@@ -88,23 +94,15 @@ function drawGrid(ctx) {
 }
 
 function drawObstacles(ctx, obstacles) {
-  if (!obstacles) return;
+  if (!obstacles?.length) return;
   for (const obs of obstacles) {
-    const x = obs.x * SCALE;
-    const y = obs.y * SCALE;
-    const w = obs.w * SCALE;
-    const h = obs.h * SCALE;
-
-    // Fill
+    const x = obs.x * SCALE, y = obs.y * SCALE;
+    const w = obs.w * SCALE, h = obs.h * SCALE;
     ctx.fillStyle = "#1e3a2f";
     ctx.fillRect(x, y, w, h);
-
-    // Border
     ctx.strokeStyle = "#22c55e44";
     ctx.lineWidth = 1;
     ctx.strokeRect(x, y, w, h);
-
-    // Hatching so they look solid
     ctx.strokeStyle = "#16532d33";
     ctx.lineWidth = 0.5;
     for (let i = -h; i < w + h; i += 10) {
@@ -116,7 +114,56 @@ function drawObstacles(ctx, obstacles) {
   }
 }
 
+function drawGoal(ctx, goal) {
+  if (!goal || !goal.w) return;
+  const x = goal.x * SCALE, y = goal.y * SCALE;
+  const w = goal.w * SCALE, h = goal.h * SCALE;
+
+  // Glowing green fill
+  ctx.fillStyle = "#14532d55";
+  ctx.fillRect(x, y, w, h);
+
+  // Dashed border
+  ctx.strokeStyle = "#22c55e";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 3]);
+  ctx.strokeRect(x, y, w, h);
+  ctx.setLineDash([]);
+
+  // Label
+  ctx.fillStyle = "#22c55e";
+  ctx.font = "bold 11px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("GOAL", x + w / 2, y + h / 2);
+}
+
+function drawFlag(ctx, flag) {
+  if (!flag) return;
+  const x = flag.x * SCALE;
+  const y = flag.y * SCALE;
+  const colour = flag.colour === "red" ? "#ef4444" : "#22c55e";
+
+  // Flag pole
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y + 12);
+  ctx.lineTo(x, y - 12);
+  ctx.stroke();
+
+  // Flag triangle
+  ctx.fillStyle = colour;
+  ctx.beginPath();
+  ctx.moveTo(x, y - 12);
+  ctx.lineTo(x + 10, y - 6);
+  ctx.lineTo(x, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
 function drawStart(ctx, start) {
+  if (!start) return;
   const x = start.x * SCALE;
   const y = start.y * SCALE;
   ctx.beginPath();
@@ -145,63 +192,35 @@ function drawTrail(ctx, trail) {
 }
 
 function drawRobot(ctx, frame) {
-  const x = frame.x * SCALE;
-  const y = frame.y * SCALE;
+  const x   = frame.x * SCALE;
+  const y   = frame.y * SCALE;
   const rad = (frame.angle * Math.PI) / 180;
-  const R = 14;
+  const R   = 14;
 
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rad);
 
-  // Glow
   ctx.shadowColor = "#22c55e";
-  ctx.shadowBlur = 14;
+  ctx.shadowBlur  = 14;
 
-  // Body
   ctx.beginPath();
   ctx.arc(0, 0, R, 0, Math.PI * 2);
-  ctx.fillStyle = "#22c55e";
+  ctx.fillStyle   = "#22c55e";
   ctx.fill();
   ctx.strokeStyle = "#16a34a";
-  ctx.lineWidth = 2;
+  ctx.lineWidth   = 2;
   ctx.stroke();
 
   ctx.shadowBlur = 0;
 
-  // Nose
   ctx.beginPath();
   ctx.moveTo(2, 0);
   ctx.lineTo(R - 1, 0);
   ctx.strokeStyle = "#052e16";
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = "round";
+  ctx.lineWidth   = 2.5;
+  ctx.lineCap     = "round";
   ctx.stroke();
 
   ctx.restore();
-}
-
-function drawGoal(ctx, goal) {
-  const x = goal.x * SCALE;
-  const y = goal.y * SCALE;
-  const w = goal.w * SCALE;
-  const h = goal.h * SCALE;
-
-  // Pulsing green fill
-  ctx.fillStyle = "#14532d55";
-  ctx.fillRect(x, y, w, h);
-
-  // Border
-  ctx.strokeStyle = "#22c55e";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([6, 3]);
-  ctx.strokeRect(x, y, w, h);
-  ctx.setLineDash([]);
-
-  // Label
-  ctx.fillStyle = "#22c55e";
-  ctx.font = "bold 11px monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("GOAL", x + w / 2, y + h / 2);
 }
