@@ -1,23 +1,4 @@
-# ── Challenge data structure ──────────────────────────────────
-#
-# Each challenge has:
-#   id:           unique string, used in DB and URLs
-#   track:        1-6
-#   order:        position within track
-#   title:        display name
-#   description:  what the student must do
-#   workshop_link: connects to something they did in the Karoo workshop
-#   concept:      primary Python concept taught
-#   arena:        which physics arena layout to load
-#   starter_code: pre-loaded in the editor
-#   hints:        list of hints revealed one at a time (free → costs points)
-#   goal:         what counts as "passing" (score threshold, flags, etc.)
-#   points_max:   maximum score available
-#   pass_threshold: minimum score to mark as complete
-#   unlocks:      list of challenge ids this unlocks when passed
-#   is_boss:      bool — boss levels gate the next track
-#   is_team:      bool — collaborative challenge
-#   tags:         concept tags shown in UI
+from typing import Optional
 
 CHALLENGES = {
 
@@ -42,10 +23,16 @@ CHALLENGES = {
         ),
         "concept": "Function calls and arguments",
         "arena": "open_field_near",
+        "goals": [{"x": 420, "y": 240, "w": 70, "h": 70}],
+        "flags": [],
+        "obstacles": [],
+        "start": {"x": 80, "y": 285, "angle": 0},
+        "par_time": 4.0,
+        "time_limit": 12.0,
         "starter_code": """\
 # Your robot is waiting for instructions.
 # robot.move(speed, duration)
-#   speed:    0.0 (stop)  →  1.0 (full speed)
+#   speed:    0.0 (stop)  ->  1.0 (full speed)
 #   duration: seconds to keep moving
 
 robot.move(___, ___)  # fill in the blanks
@@ -62,13 +49,6 @@ robot.move(___, ___)  # fill in the blanks
         "is_boss": False,
         "is_team": False,
         "tags": ["function call", "arguments", "robot.move()"],
-        "arena":     "open_field_near",
-        "goals":     [{"x": 420, "y": 240, "w": 70, "h": 70}],
-        "flags":     [],
-        "obstacles": [],
-        "start":     {"x": 80, "y": 285, "angle": 0},
-        "par_time":  4.0,
-        "time_limit": 12.0,
     },
 
     "1.2": {
@@ -77,7 +57,7 @@ robot.move(___, ___)  # fill in the blanks
         "order": 2,
         "title": "The motor shaft turns",
         "description": (
-            "Make the robot turn 90° right, move forward, then turn 90° "
+            "Make the robot turn 90 degrees right, move forward, then turn 90 degrees "
             "left and reach the goal. Positive degrees = clockwise turn, "
             "negative = counter-clockwise."
         ),
@@ -88,6 +68,12 @@ robot.move(___, ___)  # fill in the blanks
         ),
         "concept": "Sequencing multiple commands",
         "arena": "l_shaped_path",
+        "goals": [{"x": 440, "y": 380, "w": 70, "h": 70}],
+        "flags": [],
+        "obstacles": [{"x": 280, "y": 0, "w": 20, "h": 260}],
+        "start": {"x": 80, "y": 180, "angle": 0},
+        "par_time": 5.0,
+        "time_limit": 15.0,
         "starter_code": """\
 # The goal is around a corner — you need to turn to reach it.
 # robot.turn(degrees)
@@ -110,13 +96,6 @@ robot.move(0.8, 1.5)   # move forward again
         "is_boss": False,
         "is_team": False,
         "tags": ["sequencing", "robot.turn()", "angles"],
-        "arena":     "l_shaped_path",
-        "goals":     [{"x": 440, "y": 380, "w": 70, "h": 70}],
-        "flags":     [],
-        "obstacles": [{"x": 280, "y": 0, "w": 20, "h": 260}],
-        "start":     {"x": 80, "y": 180, "angle": 0},
-        "par_time":  5.0,
-        "time_limit": 15.0,
     },
 
     "1.3": {
@@ -137,6 +116,16 @@ robot.move(0.8, 1.5)   # move forward again
         ),
         "concept": "Float values and precision",
         "arena": "three_targets",
+        "goals": [
+            {"x": 155, "y": 235, "w": 50, "h": 50},
+            {"x": 295, "y": 235, "w": 50, "h": 50},
+            {"x": 435, "y": 235, "w": 50, "h": 50},
+        ],
+        "flags": [],
+        "obstacles": [],
+        "start": {"x": 60, "y": 260, "angle": 0},
+        "par_time": 6.0,
+        "time_limit": 18.0,
         "starter_code": """\
 # Three goals at different distances.
 # Tune speed and duration to land on each one.
@@ -145,7 +134,7 @@ robot.move(0.8, 1.5)   # move forward again
 # Goal 1 (close)
 robot.move(___, ___)
 
-# Goal 2 (medium) — need to reset position between goals
+# Goal 2 (medium)
 robot.move(___, ___)
 
 # Goal 3 (far)
@@ -154,7 +143,7 @@ robot.move(___, ___)
         "hints": [
             "Start with goal 1. Try speed=0.5, duration=1.0 and adjust from there.",
             "Smaller duration = shorter distance. Larger speed = more distance per second.",
-            "You can use decimal values like 0.75 or 1.2 — you're not limited to whole numbers.",
+            "You can use decimal values like 0.75 or 1.2 — not limited to whole numbers.",
         ],
         "goal": {"type": "reach_all_goals", "min_score": 70},
         "points_max": 150,
@@ -163,17 +152,6 @@ robot.move(___, ___)
         "is_boss": False,
         "is_team": False,
         "tags": ["float values", "precision", "tuning"],
-        "arena":     "three_targets",
-        "goals":     [
-            {"x": 155, "y": 235, "w": 50, "h": 50},
-            {"x": 295, "y": 235, "w": 50, "h": 50},
-            {"x": 435, "y": 235, "w": 50, "h": 50},
-        ],
-        "flags":     [],
-        "obstacles": [],
-        "start":     {"x": 60, "y": 260, "angle": 0},
-        "par_time":  6.0,
-        "time_limit": 18.0,
     },
 
     "1.4": {
@@ -194,6 +172,12 @@ robot.move(___, ___)
         ),
         "concept": "Variables and naming",
         "arena": "shifting_goal",
+        "goals": [{"x": 400, "y": 240, "w": 60, "h": 60}],
+        "flags": [],
+        "obstacles": [],
+        "start": {"x": 80, "y": 270, "angle": 0},
+        "par_time": 5.0,
+        "time_limit": 15.0,
         "starter_code": """\
 # Store your speed here — change this ONE line to fix everything.
 my_speed = 0.8
@@ -215,13 +199,6 @@ robot.move(my_speed, ___)  # what duration gets you to the goal?
         "is_boss": False,
         "is_team": False,
         "tags": ["variables", "assignment", "naming"],
-        "arena":     "shifting_goal",
-        "goals":     [{"x": 400, "y": 240, "w": 60, "h": 60}],
-        "flags":     [],
-        "obstacles": [],
-        "start":     {"x": 80, "y": 270, "angle": 0},
-        "par_time":  5.0,
-        "time_limit": 15.0,
     },
 
     "1.5": {
@@ -233,8 +210,7 @@ robot.move(my_speed, ___)  # what duration gets you to the goal?
             "You'll see a working but messy program — no comments, "
             "cryptic names, magic numbers. Rewrite it with good variable "
             "names and comments so that a classmate can understand it "
-            "without asking you a single question. Then pass it to another "
-            "student to verify."
+            "without asking you a single question."
         ),
         "workshop_link": (
             "When you came back after lunch on Day 3 and couldn't remember "
@@ -243,6 +219,12 @@ robot.move(my_speed, ___)  # what duration gets you to the goal?
         ),
         "concept": "Comments, naming, and readability",
         "arena": "open_field_near",
+        "goals": [{"x": 420, "y": 240, "w": 70, "h": 70}],
+        "flags": [],
+        "obstacles": [],
+        "start": {"x": 80, "y": 275, "angle": 0},
+        "par_time": 5.0,
+        "time_limit": 15.0,
         "starter_code": """\
 # CHALLENGE: This code works but is unreadable.
 # Rewrite it with good names and comments.
@@ -269,13 +251,6 @@ robot.move(x, z)
         "is_boss": False,
         "is_team": False,
         "tags": ["comments", "naming", "readability"],
-        "arena":     "open_field_near",
-        "goals":     [{"x": 420, "y": 240, "w": 70, "h": 70}],
-        "flags":     [],
-        "obstacles": [],
-        "start":     {"x": 80, "y": 275, "angle": 0},
-        "par_time":  5.0,
-        "time_limit": 15.0,
     },
 
     "1.6": {
@@ -297,6 +272,12 @@ robot.move(x, z)
         ),
         "concept": "print(), debugging, f-strings",
         "arena": "l_shaped_path",
+        "goals": [{"x": 440, "y": 380, "w": 70, "h": 70}],
+        "flags": [],
+        "obstacles": [{"x": 280, "y": 0, "w": 20, "h": 260}],
+        "start": {"x": 80, "y": 180, "angle": 0},
+        "par_time": 5.0,
+        "time_limit": 15.0,
         "starter_code": """\
 # This program has a bug. Use print() to find it.
 # Add print() statements between commands to see what's happening.
@@ -315,8 +296,8 @@ robot.move(speed, 0.5)   # is this the right duration?
 print("Done — did we reach the goal?")
 """,
         "hints": [
-            "The turn angle looks suspicious — an L-shaped path needs a 90° turn, not 45°.",
-            "Print the distance to the goal after each move: print(f'Distance: {robot.get_distance()}')",
+            "The turn angle looks suspicious — an L-shaped path needs a 90 degree turn, not 45.",
+            "Print the distance to goal after each move: print(f'Distance: {robot.get_distance()}')",
             "Fix the turn angle first. Then fix the final duration if needed.",
         ],
         "goal": {"type": "reach_goal_and_has_print", "min_score": 70},
@@ -326,13 +307,6 @@ print("Done — did we reach the goal?")
         "is_boss": False,
         "is_team": False,
         "tags": ["print()", "f-strings", "debugging"],
-        "arena":     "l_shaped_path",
-        "goals":     [{"x": 440, "y": 380, "w": 70, "h": 70}],
-        "flags":     [],
-        "obstacles": [{"x": 280, "y": 0, "w": 20, "h": 260}],
-        "start":     {"x": 80, "y": 180, "angle": 0},
-        "par_time":  5.0,
-        "time_limit": 15.0,
     },
 
     "1.7": {
@@ -341,11 +315,10 @@ print("Done — did we reach the goal?")
         "order": 7,
         "title": "Boss: recreate your RC car route",
         "description": (
-            "You'll be shown the route your physical RC car completed "
-            "during the Karoo workshop — a series of turns and straights. "
-            "Recreate that exact route in the simulator using only "
-            "move(), turn(), variables, and print(). Must score 80+ "
-            "to unlock Track 2."
+            "Recreate the route your physical RC car completed during the "
+            "Karoo workshop — a series of turns and straights. "
+            "Use move(), turn(), variables, and print(). "
+            "Must score 80+ to unlock Track 2."
         ),
         "workshop_link": (
             "This IS the workshop robot. Same turns, same distances — "
@@ -354,6 +327,16 @@ print("Done — did we reach the goal?")
         ),
         "concept": "All Track 1 concepts combined",
         "arena": "workshop_route",
+        "goals": [{"x": 440, "y": 400, "w": 80, "h": 80}],
+        "flags": [],
+        "obstacles": [
+            {"x": 240, "y": 0,   "w": 20, "h": 280},
+            {"x": 240, "y": 360, "w": 20, "h": 240},
+            {"x": 360, "y": 120, "w": 240, "h": 20},
+        ],
+        "start": {"x": 80, "y": 200, "angle": 0},
+        "par_time": 8.0,
+        "time_limit": 20.0,
         "starter_code": """\
 # Recreate the RC car route from your Karoo workshop.
 # Use variables for values you'll reuse.
@@ -378,17 +361,6 @@ print("Starting the workshop route...")
         "is_boss": True,
         "is_team": False,
         "tags": ["boss level", "sequencing", "variables", "print()", "debugging"],
-        "arena":     "workshop_route",
-        "goals":     [{"x": 440, "y": 400, "w": 80, "h": 80}],
-        "flags":     [],
-        "obstacles": [
-            {"x": 240, "y": 0,   "w": 20, "h": 280},
-            {"x": 240, "y": 360, "w": 20, "h": 240},
-            {"x": 360, "y": 120, "w": 240, "h": 20},
-        ],
-        "start":     {"x": 80, "y": 200, "angle": 0},
-        "par_time":  8.0,
-        "time_limit": 20.0,
     },
 
     # ════════════════════════════════════════════════════════════
@@ -412,6 +384,12 @@ print("Starting the workshop route...")
         ),
         "concept": "for loop and range()",
         "arena": "square_path",
+        "goals": [{"x": 240, "y": 240, "w": 80, "h": 80}],
+        "flags": [],
+        "obstacles": [],
+        "start": {"x": 120, "y": 120, "angle": 0},
+        "par_time": 6.0,
+        "time_limit": 18.0,
         "starter_code": """\
 # BEFORE: This works but repeats itself 4 times.
 # Rewrite it using a for loop.
@@ -442,13 +420,6 @@ for i in range(___):   # how many sides does a square have?
         "is_boss": False,
         "is_team": False,
         "tags": ["for loop", "range()", "indentation"],
-        "arena":     "square_path",
-        "goals":     [{"x": 240, "y": 240, "w": 80, "h": 80}],
-        "flags":     [],
-        "obstacles": [],
-        "start":     {"x": 120, "y": 120, "angle": 0},
-        "par_time":  6.0,
-        "time_limit": 18.0,
     },
 
     "2.2": {
@@ -459,7 +430,7 @@ for i in range(___):   # how many sides does a square have?
         "description": (
             "Collect 5 flags in a line. The loop runs 5 times. But the "
             "robot must also print which flag it's collecting — use the "
-            "loop variable i to say 'Collecting flag 1', 'Collecting flag 2', etc."
+            "loop variable i to say Collecting flag 1, Collecting flag 2, etc."
         ),
         "workshop_link": (
             "Your Arduino counted pulses from the wheel encoder using a "
@@ -468,12 +439,24 @@ for i in range(___):   # how many sides does a square have?
         ),
         "concept": "Loop variable i and f-strings",
         "arena": "five_flags_line",
+        "goals": [{"x": 480, "y": 255, "w": 60, "h": 60}],
+        "flags": [
+            {"x": 160, "y": 285, "colour": "green"},
+            {"x": 240, "y": 285, "colour": "green"},
+            {"x": 320, "y": 285, "colour": "green"},
+            {"x": 400, "y": 285, "colour": "green"},
+            {"x": 480, "y": 285, "colour": "green"},
+        ],
+        "obstacles": [],
+        "start": {"x": 60, "y": 285, "angle": 0},
+        "par_time": 7.0,
+        "time_limit": 20.0,
         "starter_code": """\
 # Collect all 5 flags and print which one you're getting.
 # The variable i goes: 0, 1, 2, 3, 4
 
 for i in range(5):
-    print(f"Collecting flag {i + 1}...")  # i+1 so it says 1,2,3 not 0,1,2
+    print(f"Collecting flag {i + 1}...")
     robot.move(0.8, 1.2)
     robot.move(0.0, 0.1)  # brief pause at each flag
 """,
@@ -489,19 +472,6 @@ for i in range(5):
         "is_boss": False,
         "is_team": False,
         "tags": ["for loop", "loop variable", "f-strings"],
-        "arena":     "five_flags_line",
-        "goals":     [{"x": 480, "y": 255, "w": 60, "h": 60}],
-        "flags":     [
-            {"x": 160, "y": 285, "colour": "green"},
-            {"x": 240, "y": 285, "colour": "green"},
-            {"x": 320, "y": 285, "colour": "green"},
-            {"x": 400, "y": 285, "colour": "green"},
-            {"x": 480, "y": 285, "colour": "green"},
-        ],
-        "obstacles": [],
-        "start":     {"x": 60, "y": 285, "angle": 0},
-        "par_time":  7.0,
-        "time_limit": 20.0,
     },
 
     "2.3": {
@@ -522,12 +492,18 @@ for i in range(5):
         ),
         "concept": "Expressions and math inside loops",
         "arena": "open_large",
+        "goals": [{"x": 240, "y": 240, "w": 80, "h": 80}],
+        "flags": [],
+        "obstacles": [],
+        "start": {"x": 460, "y": 460, "angle": 180},
+        "par_time": 8.0,
+        "time_limit": 20.0,
         "starter_code": """\
 # Each side of the spiral gets shorter.
 # i=0: duration=2.0, i=1: duration=1.8, i=2: duration=1.6 ...
 
 for i in range(5):
-    duration = 2.0 - (i * 0.2)           # shrinks each time
+    duration = 2.0 - (i * 0.2)
     print(f"Side {i+1}: duration={duration:.1f}s")
     robot.move(1.0, duration)
     robot.turn(90)
@@ -544,13 +520,6 @@ for i in range(5):
         "is_boss": False,
         "is_team": False,
         "tags": ["for loop", "math in loop", "expressions"],
-        "arena":     "open_large",
-        "goals":     [{"x": 240, "y": 240, "w": 80, "h": 80}],
-        "flags":     [],
-        "obstacles": [],
-        "start":     {"x": 460, "y": 460, "angle": 180},
-        "par_time":  8.0,
-        "time_limit": 20.0,
     },
 
     "2.4": {
@@ -571,14 +540,20 @@ for i in range(5):
         ),
         "concept": "while loop and sensor conditions",
         "arena": "wall_approach",
+        "goals": [{"x": 380, "y": 240, "w": 60, "h": 60}],
+        "flags": [],
+        "obstacles": [{"x": 460, "y": 100, "w": 20, "h": 400}],
+        "start": {"x": 80, "y": 270, "angle": 0},
+        "par_time": 6.0,
+        "time_limit": 15.0,
         "starter_code": """\
 # Keep moving until the wall is close.
 # robot.get_distance() returns distance to nearest obstacle in metres.
 
 print(f"Starting distance: {robot.get_distance():.2f}m")
 
-while robot.get_distance() > 0.5:   # keep going while far from wall
-    robot.move(0.4, 0.1)            # move a tiny bit forward
+while robot.get_distance() > 0.5:
+    robot.move(0.4, 0.1)
     print(f"Distance: {robot.get_distance():.2f}m")
 
 print("Wall reached! Stopping.")
@@ -595,13 +570,6 @@ print("Wall reached! Stopping.")
         "is_boss": False,
         "is_team": False,
         "tags": ["while loop", "sensor", "get_distance()", "conditions"],
-        "arena":     "wall_approach",
-        "goals":     [{"x": 380, "y": 240, "w": 60, "h": 60}],
-        "flags":     [],
-        "obstacles": [{"x": 460, "y": 100, "w": 20, "h": 400}],
-        "start":     {"x": 80, "y": 270, "angle": 0},
-        "par_time":  6.0,
-        "time_limit": 15.0,
     },
 
     "2.5": {
@@ -610,7 +578,7 @@ print("Wall reached! Stopping.")
         "order": 5,
         "title": "Nested loops: grid of checkpoints",
         "description": (
-            "Visit a 3×3 grid of flags — 9 total. The outer loop handles "
+            "Visit a 3x3 grid of flags — 9 total. The outer loop handles "
             "rows, the inner loop handles columns. Two lines of loop code "
             "control 9 movements. This is how robots scan an area."
         ),
@@ -621,36 +589,8 @@ print("Wall reached! Stopping.")
         ),
         "concept": "Nested for loops",
         "arena": "grid_3x3",
-        "starter_code": """\
-# Visit every point in a 3x3 grid.
-# Outer loop = rows (3 rows)
-# Inner loop = columns (3 columns per row)
-
-for row in range(3):
-    print(f"--- Row {row + 1} ---")
-    for col in range(3):
-        print(f"  Visiting ({row+1}, {col+1})")
-        robot.move(0.8, 1.0)   # move to next column
-    # at end of row: go back to start of next row
-    robot.turn(___)
-    robot.move(0.8, ___)
-    robot.turn(___)
-""",
-        "hints": [
-            "After each row, you need to turn around and move to the next row (like a typewriter).",
-            "The inner loop runs 3 times for every 1 time the outer loop runs.",
-            "Total checkpoints = rows × columns = 3 × 3 = 9.",
-        ],
-        "goal": {"type": "collect_all_flags", "min_score": 70},
-        "points_max": 250,
-        "pass_threshold": 70,
-        "unlocks": ["2.6"],
-        "is_boss": False,
-        "is_team": False,
-        "tags": ["nested loops", "2D thinking", "scanning"],
-        "arena":     "grid_3x3",
-        "goals":     [{"x": 460, "y": 460, "w": 60, "h": 60}],
-        "flags":     [
+        "goals": [{"x": 460, "y": 460, "w": 60, "h": 60}],
+        "flags": [
             {"x": 160, "y": 160, "colour": "green"},
             {"x": 300, "y": 160, "colour": "green"},
             {"x": 440, "y": 160, "colour": "green"},
@@ -662,9 +602,36 @@ for row in range(3):
             {"x": 440, "y": 440, "colour": "green"},
         ],
         "obstacles": [],
-        "start":     {"x": 60, "y": 60, "angle": 0},
-        "par_time":  15.0,
+        "start": {"x": 60, "y": 60, "angle": 0},
+        "par_time": 15.0,
         "time_limit": 30.0,
+        "starter_code": """\
+# Visit every point in a 3x3 grid.
+# Outer loop = rows (3 rows)
+# Inner loop = columns (3 columns per row)
+
+for row in range(3):
+    print(f"--- Row {row + 1} ---")
+    for col in range(3):
+        print(f"  Visiting ({row+1}, {col+1})")
+        robot.move(0.8, 1.0)
+    # at end of row: go back to start of next row
+    robot.turn(___)
+    robot.move(0.8, ___)
+    robot.turn(___)
+""",
+        "hints": [
+            "After each row, you need to turn around and move to the next row (like a typewriter).",
+            "The inner loop runs 3 times for every 1 time the outer loop runs.",
+            "Total checkpoints = rows x columns = 3 x 3 = 9.",
+        ],
+        "goal": {"type": "collect_all_flags", "min_score": 70},
+        "points_max": 250,
+        "pass_threshold": 70,
+        "unlocks": ["2.6"],
+        "is_boss": False,
+        "is_team": False,
+        "tags": ["nested loops", "2D thinking", "scanning"],
     },
 
     "2.6": {
@@ -685,6 +652,23 @@ for row in range(3):
         ),
         "concept": "break and continue",
         "arena": "mixed_flags_10",
+        "goals": [{"x": 500, "y": 240, "w": 50, "h": 50}],
+        "flags": [
+            {"x": 60,  "y": 285, "colour": "green"},
+            {"x": 110, "y": 285, "colour": "green"},
+            {"x": 160, "y": 285, "colour": "green"},
+            {"x": 210, "y": 285, "colour": "red"},
+            {"x": 260, "y": 285, "colour": "green"},
+            {"x": 310, "y": 285, "colour": "green"},
+            {"x": 360, "y": 285, "colour": "green"},
+            {"x": 410, "y": 285, "colour": "red"},
+            {"x": 460, "y": 285, "colour": "green"},
+            {"x": 510, "y": 285, "colour": "green"},
+        ],
+        "obstacles": [],
+        "start": {"x": 30, "y": 285, "angle": 0},
+        "par_time": 12.0,
+        "time_limit": 25.0,
         "starter_code": """\
 # 10 checkpoints ahead. Skip even ones. Stop at red flags.
 # robot.get_flag_colour() returns "green", "red", or None
@@ -696,7 +680,7 @@ for i in range(10):
         print(f"Red flag at checkpoint {i+1}! Stopping.")
         ___         # stop the loop completely
 
-    if i % 2 == 0:  # even numbers: 0, 2, 4, 6, 8
+    if i % 2 == 0:
         print(f"Skipping checkpoint {i+1} (even)")
         ___         # skip this iteration, go to next
 
@@ -715,24 +699,6 @@ for i in range(10):
         "is_boss": False,
         "is_team": False,
         "tags": ["break", "continue", "loop control"],
-        "arena":     "mixed_flags_10",
-        "goals":     [{"x": 500, "y": 240, "w": 50, "h": 50}],
-        "flags":     [
-            {"x": 60,  "y": 285, "colour": "green"},
-            {"x": 110, "y": 285, "colour": "green"},
-            {"x": 160, "y": 285, "colour": "green"},
-            {"x": 210, "y": 285, "colour": "red"},
-            {"x": 260, "y": 285, "colour": "green"},
-            {"x": 310, "y": 285, "colour": "green"},
-            {"x": 360, "y": 285, "colour": "green"},
-            {"x": 410, "y": 285, "colour": "red"},
-            {"x": 460, "y": 285, "colour": "green"},
-            {"x": 510, "y": 285, "colour": "green"},
-        ],
-        "obstacles": [],
-        "start":     {"x": 30, "y": 285, "angle": 0},
-        "par_time":  12.0,
-        "time_limit": 25.0,
     },
 
     "2.7": {
@@ -753,6 +719,16 @@ for i in range(10):
         ),
         "concept": "All Track 2 concepts combined",
         "arena": "random_maze",
+        "goals": [{"x": 460, "y": 460, "w": 60, "h": 60}],
+        "flags": [
+            {"x": 180, "y": 180, "colour": "green"},
+            {"x": 420, "y": 180, "colour": "green"},
+            {"x": 300, "y": 420, "colour": "green"},
+        ],
+        "obstacles": [],
+        "start": {"x": 60, "y": 60, "angle": 0},
+        "par_time": 15.0,
+        "time_limit": 30.0,
         "starter_code": """\
 # The maze changes every run — no hardcoding allowed.
 # Use loops and robot.get_distance() to navigate.
@@ -761,9 +737,9 @@ flags_collected = 0
 
 while flags_collected < 3:
     if robot.get_distance() > 0.8:
-        robot.move(0.6, 0.2)     # move forward if clear
+        robot.move(0.6, 0.2)
     else:
-        robot.turn(___)           # turn if wall ahead
+        robot.turn(___)
 
     if robot.get_flag_colour() == "green":
         flags_collected += 1
@@ -772,7 +748,7 @@ while flags_collected < 3:
 print("All flags collected — find the exit!")
 """,
         "hints": [
-            "If a wall is ahead, try turning 90° right. If still blocked, try 90° left.",
+            "If a wall is ahead, try turning 90 degrees right. If still blocked, try 90 degrees left.",
             "robot.get_distance() < 0.5 means a wall is very close — turn immediately.",
             "Use a while loop for the main navigation, with for loops for turning sequences.",
         ],
@@ -783,17 +759,6 @@ print("All flags collected — find the exit!")
         "is_boss": True,
         "is_team": False,
         "tags": ["boss level", "for loop", "while loop", "break", "sensors"],
-        "arena":     "random_maze",
-        "goals":     [{"x": 460, "y": 460, "w": 60, "h": 60}],
-        "flags":     [
-            {"x": 180, "y": 180, "colour": "green"},
-            {"x": 420, "y": 180, "colour": "green"},
-            {"x": 300, "y": 420, "colour": "green"},
-        ],
-        "obstacles": [],
-        "start":     {"x": 60, "y": 60, "angle": 0},
-        "par_time":  15.0,
-        "time_limit": 30.0,
     },
 }
 
@@ -828,20 +793,16 @@ def get_all_tracks() -> dict:
 
 
 def get_unlocked_challenges(completed_ids: list) -> list:
-    """
-    Given a list of passed challenge IDs, return all
-    challenge IDs the student has unlocked.
-    Always includes 1.1 (the starting point).
-    """
+    """Return all challenge IDs unlocked by the given completed IDs."""
     unlocked = {"1.1"}
     for cid in completed_ids:
         if cid in CHALLENGES:
-            for unlocked_id in CHALLENGES[cid]["unlocks"]:
-                unlocked.add(unlocked_id)
+            for uid in CHALLENGES[cid]["unlocks"]:
+                unlocked.add(uid)
     return list(unlocked)
 
 
-def get_next_challenge(current_id: str) -> dict | None:
+def get_next_challenge(current_id: str) -> Optional[dict]:
     """Return the next challenge in sequence, or None if at the end."""
     current = CHALLENGES.get(current_id)
     if not current:
@@ -854,12 +815,10 @@ def get_next_challenge(current_id: str) -> dict | None:
 
 def is_track_complete(track_number: int, completed_ids: list) -> bool:
     """Check if all challenges in a track are completed."""
-    track_challenges = get_track(track_number)
-    return all(c["id"] in completed_ids for c in track_challenges)
+    return all(c["id"] in completed_ids for c in get_track(track_number))
 
 
-def get_boss_challenge(track_number: int) -> dict | None:
+def get_boss_challenge(track_number: int) -> Optional[dict]:
     """Return the boss challenge for a track."""
-    track = get_track(track_number)
-    bosses = [c for c in track if c["is_boss"]]
+    bosses = [c for c in get_track(track_number) if c["is_boss"]]
     return bosses[0] if bosses else None
