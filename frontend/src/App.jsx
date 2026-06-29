@@ -9,7 +9,6 @@ import "./index.css";
 import Auth from "./Auth";
 import { saveRun, getPersonalBest, saveBot, listMyBots, togglePublic, getPublicGallery } from "./api/runs";
 import Leaderboard from "./Leaderboard";
-import { Routes, Route, useNavigate, useSearchParams } from "react-router-dom";
 import KarooLandingPage from "./KarooLandingPage";
 import ChallengePage from "./ChallengePage";
 import { markChallengeComplete } from "./api/progress";
