@@ -97,6 +97,31 @@ export default function ResultsDrawer({
                 ))}
               </div>
             )}
+
+            {/* Code quality feedback */}
+            {score?.code_feedback?.length > 0 && (
+              <div style={{
+                background: "#0f1210",
+                border: "0.5px solid #1e2421",
+                borderRadius: 8, padding: "10px 12px"
+              }}>
+                <div style={{
+                  fontSize: 10, color: "#5a5e56",
+                  letterSpacing: "0.08em", marginBottom: 8
+                }}>
+                  CODE QUALITY
+                </div>
+                {score.code_feedback.map((line, i) => (
+                  <div key={i} style={{
+                    fontSize: 12, lineHeight: 1.6,
+                    color: line.startsWith("✓") ? "#5DCAA5" : "#f59e0b",
+                    marginBottom: 3
+                  }}>
+                    {line}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ fontSize: 12, color: "#5a5e56" }}>Run your code to see results.</div>
