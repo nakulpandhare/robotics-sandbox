@@ -14,6 +14,7 @@ import KarooLandingPage from "./KarooLandingPage";
 import ChallengePage from "./ChallengePage";
 import { markChallengeComplete } from "./api/progress";
 import ChallengeBrief from "./ChallengeBrief";
+import { Routes, Route, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -36,6 +37,8 @@ function Sandbox() {
   const [frames, setFrames] = useState([]);
   const [obstacles, setObstacles] = useState([]);
   const [goal, setGoal] = useState(null);
+  const [goals, setGoals] = useState([]);
+  const [flags, setFlags] = useState([]);
   const [start, setStart] = useState(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState(null);
@@ -53,10 +56,9 @@ function Sandbox() {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [hintPenalty, setHintPenalty] = useState(0);
   const [briefOpen, setBriefOpen] = useState(true);
-  const [goals, setGoals]   = useState([]);
-  const [flags, setFlags]   = useState([]);
   const [nextChallenge, setNextChallenge] = useState(null);
 
+  // Load challenges — re-runs when URL param changes
   useEffect(() => {
     axios.get(`${API}/challenges`).then(res => {
       const list = res.data.challenges;
@@ -68,13 +70,9 @@ function Sandbox() {
         setSelectedChallenge(list[0]);
       }
     });
-  }, []);
+  }, [challengeFromUrl]);
 
-  useEffect(() => {
-    if (!selectedChallenge) return;
-    refreshGallery();
-  }, [selectedChallenge]);
-
+  // Reset canvas and editor when challenge changes
   useEffect(() => {
     if (!selectedChallenge) return;
     setFrames([]);
@@ -84,6 +82,7 @@ function Sandbox() {
     setGoal(selectedChallenge.goals?.[0] || null);
     setStart(selectedChallenge.start || null);
     setScore(null);
+    setNextChallenge(null);
     setError(null);
     setConsoleOut([]);
     setStatus("Ready");
@@ -92,6 +91,11 @@ function Sandbox() {
     if (selectedChallenge.starter_code) {
       setCode(selectedChallenge.starter_code);
     }
+  }, [selectedChallenge]);
+
+  useEffect(() => {
+    if (!selectedChallenge) return;
+    refreshGallery();
   }, [selectedChallenge]);
 
   useEffect(() => {
@@ -121,11 +125,22 @@ function Sandbox() {
     }
   }
 
+  function handleRevealHint(index, cost) {
+    setHintsUsed(index + 1);
+    setHintPenalty(p => p + cost);
+  }
+
   function handleGoNext() {
-    if (!score?.next_challenge_id) return;
+    console.log("handleGoNext — nextChallenge:", nextChallenge);
+    if (!nextChallenge?.id) return;
     setDrawer(null);
-    // Navigate to next challenge
-    navigate(`/sandbox?challenge=${score.next_challenge_id}`);
+    setScore(null);
+    setFrames([]);
+    setConsoleOut([]);
+    setError(null);
+    setStatus("Ready");
+    setNextChallenge(null);
+    navigate(`/sandbox?challenge=${nextChallenge.id}`);
   }
 
   function handleRetry() {
@@ -135,15 +150,9 @@ function Sandbox() {
     setError(null);
     setStatus("Ready");
     setDrawer(null);
-    // Reset to starter code
     if (selectedChallenge?.starter_code) {
       setCode(selectedChallenge.starter_code);
     }
-  }
-
-  async function handleRevealHint(index, cost) {
-    setHintsUsed(index + 1);
-    setHintPenalty(p => p + cost);
   }
 
   async function handleRun() {
@@ -152,6 +161,7 @@ function Sandbox() {
     setError(null);
     setConsoleOut([]);
     setScore(null);
+    setNextChallenge(null);  // ← reset here, not below
     setStatus("Running...");
 
     try {
@@ -159,44 +169,54 @@ function Sandbox() {
         code,
         challenge_id: selectedChallenge.id,
       });
+
       setFrames(res.data.frames);
       setObstacles(res.data.obstacles || []);
       setGoals(res.data.goals || []);
       setFlags(res.data.flags || []);
       setGoal(res.data.goal || res.data.goals?.[0] || null);
       setStart(res.data.start || null);
+      setConsoleOut(res.data.console || []);
+
+      // Store next challenge BEFORE setting score
+      const next = res.data.next_challenge || null;
+      setNextChallenge(next);
 
       const result = res.data.score;
-      setScore(result);
 
-      setNextChallenge(res.data.next_challenge || null);
-      if (res.data.next_challenge) {
-        result.next_challenge_id = res.data.next_challenge.id;
-      }
-
-      // Apply hint penalty to displayed score
+      // Apply hint penalty
+      let finalResult = result;
       if (hintPenalty > 0 && result) {
         const penalisedScore = Math.max(0, result.score - hintPenalty);
-        setScore({ ...result, score: penalisedScore, breakdown: { ...result.breakdown, hint_penalty: hintPenalty, total: penalisedScore } });
+        finalResult = {
+          ...result,
+          score: penalisedScore,
+          breakdown: {
+            ...result.breakdown,
+            hint_penalty: hintPenalty,
+            total: penalisedScore,
+          },
+        };
       }
+      setScore(finalResult);
 
       if (user && selectedChallenge) {
         await saveRun({
           user,
           challengeId: selectedChallenge.id,
-          score: result.score,
-          timeTaken: result.time_taken,
-          passed: result.passed,
+          score: finalResult.score,
+          timeTaken: finalResult.time_taken,
+          passed: finalResult.passed,
           code,
         });
         getPersonalBest(user, selectedChallenge.id).then(setPersonalBest);
 
-        // Mark complete and unlock next challenge if passed
-        if (result.passed) {
-          const nextIds = res.data.next_challenge ? [res.data.next_challenge.id] : [];
-          await markChallengeComplete(user, selectedChallenge.id, result.score, nextIds);
+        if (finalResult.passed) {
+          const nextIds = next ? [next.id] : [];
+          await markChallengeComplete(user, selectedChallenge.id, finalResult.score, nextIds);
         }
       }
+
       setStatus(`Done — ${res.data.total_frames} frames`);
       setDrawer("results");
     } catch (err) {
@@ -251,10 +271,13 @@ function Sandbox() {
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
           {score && (
             <span style={{
-              fontSize: 12, color: score.passed ? "#22c55e" : "#f87171",
+              fontSize: 12,
+              color: score.passed ? "#22c55e" : "#f87171",
               padding: "4px 10px", border: "1px solid #222", borderRadius: 6
             }}>
-              {score.passed ? `${score.breakdown?.total ?? score.score}/100` : "Not solved"}
+              {score.passed
+                ? `${score.breakdown?.total ?? score.score}/${selectedChallenge?.points_max ?? 100}`
+                : "Not solved"}
             </span>
           )}
           <button
@@ -293,14 +316,14 @@ function Sandbox() {
           padding: "5px 20px", fontSize: 11, color: "#4ade80",
           background: "#0a0a0a", borderBottom: "1px solid #1a1a1a"
         }}>
-          Your best: {personalBest.score}/100 in {personalBest.time_taken}s
+          Your best: {personalBest.score}/{selectedChallenge?.points_max ?? 100} in {personalBest.time_taken}s
         </div>
       )}
 
       {/* Main workspace */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
 
-        {/* Brief panel toggle button */}
+        {/* Brief toggle */}
         <button
           onClick={() => setBriefOpen(o => !o)}
           title={briefOpen ? "Hide brief" : "Show brief"}
@@ -387,7 +410,9 @@ function Sandbox() {
         }}>
           {selectedChallenge && (
             <div style={{ fontSize: 11, color: "#555", alignSelf: "flex-start" }}>
-              <span style={{ color: "#5DCAA5" }}>{selectedChallenge.title || selectedChallenge.name}</span>
+              <span style={{ color: "#5DCAA5" }}>
+                {selectedChallenge.title || selectedChallenge.name}
+              </span>
             </div>
           )}
           <SimCanvas
@@ -402,7 +427,6 @@ function Sandbox() {
             {frames.length > 0 ? `${frames.length} frames` : "waiting for run"}
           </div>
         </div>
-
       </div>
 
       <ApiRef />
@@ -431,7 +455,6 @@ function Sandbox() {
         isOpen={drawer === "leaderboard"}
         onClose={() => setDrawer(null)}
       />
-
     </div>
   );
 }
@@ -441,7 +464,9 @@ function LeaderboardDrawer(props) {
 }
 
 export default function App() {
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
+  const location  = useLocation();
+
   return (
     <Routes>
       <Route
@@ -457,7 +482,10 @@ export default function App() {
           />
         }
       />
-      <Route path="/sandbox" element={<Sandbox />} />
+      <Route
+        path="/sandbox"
+        element={<Sandbox key={location.search} />}
+      />
     </Routes>
   );
 }
