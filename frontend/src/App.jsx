@@ -55,6 +55,7 @@ function Sandbox() {
   const [briefOpen, setBriefOpen] = useState(true);
   const [goals, setGoals]   = useState([]);
   const [flags, setFlags]   = useState([]);
+  const [nextChallenge, setNextChallenge] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/challenges`).then(res => {
@@ -120,6 +121,26 @@ function Sandbox() {
     }
   }
 
+  function handleGoNext() {
+    if (!score?.next_challenge_id) return;
+    setDrawer(null);
+    // Navigate to next challenge
+    navigate(`/sandbox?challenge=${score.next_challenge_id}`);
+  }
+
+  function handleRetry() {
+    setScore(null);
+    setFrames([]);
+    setConsoleOut([]);
+    setError(null);
+    setStatus("Ready");
+    setDrawer(null);
+    // Reset to starter code
+    if (selectedChallenge?.starter_code) {
+      setCode(selectedChallenge.starter_code);
+    }
+  }
+
   async function handleRevealHint(index, cost) {
     setHintsUsed(index + 1);
     setHintPenalty(p => p + cost);
@@ -147,6 +168,11 @@ function Sandbox() {
 
       const result = res.data.score;
       setScore(result);
+
+      setNextChallenge(res.data.next_challenge || null);
+      if (res.data.next_challenge) {
+        result.next_challenge_id = res.data.next_challenge.id;
+      }
 
       // Apply hint penalty to displayed score
       if (hintPenalty > 0 && result) {
@@ -385,7 +411,8 @@ function Sandbox() {
         isOpen={drawer === "results"}
         onClose={() => setDrawer(null)}
         score={score}
-        challengeName={selectedChallenge?.name || selectedChallenge?.title || ""}
+        challenge={selectedChallenge}
+        nextChallenge={nextChallenge}
         user={user}
         botName={botName}
         setBotName={setBotName}
@@ -395,6 +422,8 @@ function Sandbox() {
         onTogglePublic={handleTogglePublic}
         gallery={gallery}
         onLoadGalleryCode={(c) => setCode(c)}
+        onGoNext={handleGoNext}
+        onRetry={handleRetry}
       />
 
       <LeaderboardDrawer

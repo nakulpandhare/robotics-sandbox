@@ -56,6 +56,20 @@ export default function ChallengePage({ onStartChallenge, onBack }) {
       });
   }, [user]);
 
+  useEffect(() => {
+    // Refetch progress whenever the page becomes visible again
+    function onFocus() {
+        if (!user) return;
+        supabase
+        .from("student_progress")
+        .select("challenge_id, status, best_score")
+        .eq("user_id", user.id)
+        .then(({ data }) => { if (data) setDbProgress(data); });
+    }
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+    }, [user]);
+
   // Derived progress state
   const progress = (() => {
     if (!user || !dbProgress) {
@@ -159,7 +173,7 @@ export default function ChallengePage({ onStartChallenge, onBack }) {
               <button
                 onClick={() => supabase.auth.signInWithOAuth({
                   provider: "github",
-                  options: { redirectTo: "https://nakulpandhare.github.io/robotics-sandbox/challenges" }
+                  options: { redirectTo: "https://nakulpandhare.github.io/robotics-sandbox/" }
                 })}
                 style={{
                   background: "#1a1a1a", border: "0.5px solid #2a2a2a",
