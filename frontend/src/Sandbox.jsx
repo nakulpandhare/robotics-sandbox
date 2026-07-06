@@ -55,14 +55,12 @@ export default function Sandbox() {
   const [botName, setBotName]         = useState("");
   const [gallery, setGallery]         = useState([]);
 
-  // ── Auth ──────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user || null));
     const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user || null));
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // ── Load challenges ───────────────────────────────────────
   useEffect(() => {
     axios.get(`${API}/challenges`).then(res => {
       const list = res.data.challenges;
@@ -76,7 +74,6 @@ export default function Sandbox() {
     });
   }, [challengeFromUrl]);
 
-  // ── Reset on challenge change ─────────────────────────────
   useEffect(() => {
     if (!challenge) return;
     setFrames([]);
@@ -102,7 +99,6 @@ export default function Sandbox() {
     getPublicGallery(challenge.id).then(setGallery);
   }, [user, challenge]);
 
-  // ── Handlers ─────────────────────────────────────────────
   function revealHint(i, cost) {
     setHintsUsed(i + 1);
     setHintPenalty(p => p + cost);
@@ -191,81 +187,36 @@ export default function Sandbox() {
   const total      = score?.breakdown?.total ?? score?.score ?? 0;
 
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", height: "100vh",
-      background: "var(--bg-primary)", color: "var(--text-primary)",
-      fontFamily: "'Inter', system-ui, sans-serif", overflow: "hidden"
-    }}>
+    <div className="sandbox">
 
       {/* ── TOP NAV ── */}
-      <nav style={{
-        display: "flex", alignItems: "center", gap: 14,
-        padding: "0 20px", height: 52,
-        borderBottom: "1px solid var(--nav-border)",
-        background: "var(--nav-bg)",
-        backdropFilter: "blur(10px)",
-        flexShrink: 0
-      }}>
-        <button
-          onClick={() => navigate("/challenges")}
-          style={{
-            display: "flex", alignItems: "center", gap: 0,
-            background: "transparent", border: "none",
-            cursor: "pointer", fontWeight: 800, fontSize: 16,
-            color: "var(--text-primary)", padding: 0, flexShrink: 0
-          }}
-        >
-          KA<span style={{ color: "var(--amber)" }}>ROO</span>
+      <nav className="sandbox__nav">
+        <button className="nav__logo" onClick={() => navigate("/challenges")}>
+          KA<span>ROO</span>
         </button>
 
-        <div style={{ width: 1, height: 20, background: "var(--border)", flexShrink: 0 }} />
+        <div className="sandbox__divider" />
 
         {challenge && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1 }}>
-            <span style={{
-              fontSize: 10, fontWeight: 700, padding: "2px 8px",
-              background: isBoss ? "var(--amber-bg)" : "var(--bg-green)",
-              color: isBoss ? "var(--amber-text)" : "var(--green-text)",
-              borderRadius: 20, letterSpacing: "0.04em", flexShrink: 0
-            }}>
+          <div className="sandbox__challenge-info">
+            <span className={`badge ${isBoss ? "badge--amber" : "badge--green"}`}>
               {challenge.id}{isBoss ? " · BOSS" : ""}
             </span>
-            <span style={{
-              fontSize: 14, fontWeight: 600, color: "var(--text-primary)",
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
-            }}>
-              {challenge.title}
-            </span>
-            <span style={{
-              fontSize: 11, color: "var(--text-dim)", fontFamily: "monospace",
-              whiteSpace: "nowrap", flexShrink: 0,
-              display: window.innerWidth > 900 ? "block" : "none"
-            }}>
-              {challenge.concept}
-            </span>
+            <span className="sandbox__challenge-title">{challenge.title}</span>
+            <span className="sandbox__challenge-concept">{challenge.concept}</span>
           </div>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <span style={{ fontSize: 11, color: "var(--text-dim)" }}>{status}</span>
+        <div className="sandbox__nav-right">
+          <span className="sandbox__status">{status}</span>
 
           {personalBest && (
-            <span style={{ fontSize: 11, color: "var(--green)", fontWeight: 600 }}>
+            <span className="sandbox__best">
               Best: {personalBest.score}/{pointsMax}
             </span>
           )}
 
-          <button
-            onClick={handleRun}
-            disabled={running}
-            style={{
-              background: running ? "var(--text-dim)" : "var(--amber)",
-              color: "#ffffff", border: "none", borderRadius: 8,
-              padding: "7px 18px", fontSize: 13, fontWeight: 700,
-              cursor: running ? "not-allowed" : "pointer",
-              display: "flex", alignItems: "center", gap: 6
-            }}
-          >
+          <button className="btn--run" onClick={handleRun} disabled={running}>
             {running ? "⏳ Running..." : "▶  Run"}
           </button>
 
@@ -275,24 +226,17 @@ export default function Sandbox() {
             <img
               src={user.user_metadata?.avatar_url}
               alt=""
-              style={{
-                width: 30, height: 30, borderRadius: "50%",
-                border: "2px solid var(--border)", cursor: "pointer"
-              }}
+              className="nav__avatar"
               onClick={() => supabase.auth.signOut()}
               title="Click to sign out"
             />
           ) : (
             <button
+              className="btn btn--ghost btn--sm"
               onClick={() => supabase.auth.signInWithOAuth({
                 provider: "google",
                 options: { redirectTo: "https://nakulpandhare.github.io/robotics-sandbox/" }
               })}
-              style={{
-                background: "transparent", border: "1px solid var(--border)",
-                borderRadius: 6, padding: "5px 12px", fontSize: 12,
-                color: "var(--text-secondary)", cursor: "pointer"
-              }}
             >
               Sign in
             </button>
@@ -302,46 +246,26 @@ export default function Sandbox() {
 
       {/* ── BRIEF BANNER ── */}
       {challenge && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 14,
-          padding: "0 20px", height: 40,
-          background: "var(--banner-bg)",
-          borderBottom: "1px solid var(--banner-border)",
-          flexShrink: 0, overflow: "hidden"
-        }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--banner-text)", flexShrink: 0 }}>
-            🔧 Workshop
-          </span>
-          <span style={{
-            fontSize: 11, color: "var(--text-secondary)", fontStyle: "italic",
-            flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
-          }}>
+        <div className="sandbox__banner">
+          <span className="sandbox__banner-label">🔧 Workshop</span>
+          <span className="sandbox__banner-text">
             {challenge.workshop_link || challenge.description}
           </span>
 
-          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          <div className="sandbox__hints">
             {hints.map((hint, i) => {
               const cost     = i === 0 ? 0 : i === 1 ? 10 : 20;
               const revealed = i < hintsUsed;
               if (revealed) {
                 return (
-                  <span key={i} style={{
-                    fontSize: 10, padding: "2px 10px", maxWidth: 260,
-                    background: "var(--amber-bg)", border: "0.5px solid var(--border-amber)",
-                    borderRadius: 20, color: "var(--amber-text)",
-                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
-                  }}>
+                  <span key={i} className="sandbox__hint sandbox__hint--revealed">
                     💡 {hint}
                   </span>
                 );
               }
               if (i === hintsUsed) {
                 return (
-                  <button key={i} onClick={() => revealHint(i, cost)} style={{
-                    fontSize: 10, padding: "2px 10px",
-                    background: "var(--bg-card)", border: "0.5px solid var(--border-amber)",
-                    borderRadius: 20, color: "var(--amber-text)", cursor: "pointer"
-                  }}>
+                  <button key={i} onClick={() => revealHint(i, cost)} className="sandbox__hint sandbox__hint--button">
                     💡 Hint {i + 1} {cost > 0 ? `(-${cost} pts)` : "(free)"}
                   </button>
                 );
@@ -350,12 +274,7 @@ export default function Sandbox() {
             })}
           </div>
 
-          <span style={{
-            fontSize: 10, fontWeight: 700, padding: "2px 10px",
-            background: isBoss ? "var(--amber-bg)" : "var(--bg-green)",
-            color: isBoss ? "var(--amber-text)" : "var(--green-text)",
-            borderRadius: 20, flexShrink: 0
-          }}>
+          <span className={`badge ${isBoss ? "badge--amber" : "badge--green"} sandbox__pass-badge`}>
             {passThresh}+ to pass · {pointsMax} pts
             {hintPenalty > 0 && ` · -${hintPenalty} hint`}
           </span>
@@ -363,14 +282,11 @@ export default function Sandbox() {
       )}
 
       {/* ── WORKSPACE ── */}
-      <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
+      <div className="sandbox__workspace">
 
         {/* Editor + console */}
-        <div style={{
-          flex: 1, display: "flex", flexDirection: "column",
-          minWidth: 0, borderRight: "1px solid var(--border)"
-        }}>
-          <div style={{ flex: 1, overflow: "hidden", minHeight: 0 }}>
+        <div className="sandbox__editor-col">
+          <div className="sandbox__editor-wrap">
             <Editor
               height="100%"
               defaultLanguage="python"
@@ -390,35 +306,21 @@ export default function Sandbox() {
           </div>
 
           {/* Console */}
-          <div style={{
-            height: 90, flexShrink: 0,
-            background: "var(--console-bg)",
-            borderTop: "1px solid var(--console-border)",
-            display: "flex", flexDirection: "column"
-          }}>
-            <div style={{
-              padding: "4px 16px", fontSize: 10,
-              color: "var(--console-text)", letterSpacing: "0.08em",
-              flexShrink: 0, borderBottom: "1px solid var(--console-border)"
-            }}>
+          <div className="sandbox__console">
+            <div className="sandbox__console-label">
               CONSOLE
               {hintPenalty > 0 && (
-                <span style={{ color: "var(--amber)", marginLeft: 10 }}>
-                  · hint penalty: -{hintPenalty} pts
-                </span>
+                <span className="sandbox__console-penalty"> · hint penalty: -{hintPenalty} pts</span>
               )}
             </div>
-            <div style={{
-              flex: 1, overflowY: "auto", padding: "6px 16px",
-              fontSize: 12, lineHeight: 1.7, fontFamily: "monospace"
-            }}>
-              {error && <span style={{ color: "var(--text-red)" }}>✖ {error}</span>}
+            <div className="sandbox__console-body">
+              {error && <span className="sandbox__console-error">✖ {error}</span>}
               {!error && consoleOut.length === 0 && (
-                <span style={{ color: "var(--text-dim)" }}>No output. Click Run.</span>
+                <span className="sandbox__console-empty">No output. Click Run.</span>
               )}
               {consoleOut.map((line, i) => (
-                <div key={i} style={{ color: "var(--green)" }}>
-                  <span style={{ color: "var(--green-text)", marginRight: 8 }}>{">"}</span>
+                <div key={i} className="sandbox__console-line">
+                  <span className="sandbox__console-arrow">{">"}</span>
                   {line}
                 </div>
               ))}
@@ -427,18 +329,10 @@ export default function Sandbox() {
         </div>
 
         {/* ── RIGHT PANEL ── */}
-        <div style={{
-          width: 420, flexShrink: 0,
-          display: "flex", flexDirection: "column",
-          background: "var(--bg-dark)"
-        }}>
+        <div className="sandbox__right">
 
           {/* Canvas */}
-          <div style={{
-            flex: 1, display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            padding: 16, gap: 10, minHeight: 0
-          }}>
+          <div className="sandbox__canvas-area">
             <SimCanvas
               frames={frames}
               obstacles={obstacles}
@@ -450,32 +344,14 @@ export default function Sandbox() {
               isDark={isDark}
             />
 
-            {/* Robot emoji picker */}
-            <div style={{
-              display: "flex", gap: 5, alignItems: "center",
-              background: "var(--bg-card)",
-              border: "0.5px solid var(--border)",
-              borderRadius: 20, padding: "4px 10px"
-            }}>
-              <span style={{
-                fontSize: 9, color: "var(--text-dim)",
-                marginRight: 4, letterSpacing: ".06em"
-              }}>
-                ROBOT
-              </span>
+            <div className="sandbox__emoji-picker">
+              <span className="sandbox__emoji-label">ROBOT</span>
               {ROBOT_EMOJIS.map(e => (
                 <button
                   key={e}
                   onClick={() => setRobotEmoji(e)}
                   title={e}
-                  style={{
-                    background: robotEmoji === e ? "var(--amber-bg)" : "transparent",
-                    border: robotEmoji === e
-                      ? "1.5px solid var(--amber)"
-                      : "1.5px solid transparent",
-                    borderRadius: 6, padding: "2px 5px",
-                    fontSize: 16, cursor: "pointer", lineHeight: 1
-                  }}
+                  className={`sandbox__emoji-btn ${robotEmoji === e ? "sandbox__emoji-btn--active" : ""}`}
                 >
                   {e}
                 </button>
@@ -484,128 +360,74 @@ export default function Sandbox() {
           </div>
 
           {/* ── INLINE RESULT ── */}
-          <div style={{
-            borderTop: "1px solid var(--border)",
-            background: score
-              ? passed
-                ? "var(--bg-green)"
-                : "var(--bg-red)"
-              : "var(--bg-card)",
-            flexShrink: 0
-          }}>
+          <div className={`sandbox__result ${score ? (passed ? "sandbox__result--pass" : "sandbox__result--fail") : ""}`}>
 
-            {/* No result yet */}
             {!score && !error && (
-              <div style={{ padding: "14px 16px", fontSize: 12, color: "var(--text-dim)" }}>
+              <div className="sandbox__result-inner sandbox__result-empty">
                 Write code and click ▶ Run to test your solution.
               </div>
             )}
 
-            {/* Error (no score) */}
             {error && !score && (
-              <div style={{ padding: "14px 16px" }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-red)", marginBottom: 4 }}>
-                  Error
-                </div>
-                <div style={{ fontSize: 12, color: "var(--text-red)", marginBottom: 10 }}>{error}</div>
-                <button onClick={handleRetry} style={{
-                  background: "transparent",
-                  border: "1px solid var(--text-red)",
-                  color: "var(--text-red)", borderRadius: 6,
-                  padding: "5px 12px", fontSize: 11, cursor: "pointer"
-                }}>
+              <div className="sandbox__result-inner">
+                <div className="sandbox__error-title">Error</div>
+                <div className="sandbox__error-msg">{error}</div>
+                <button onClick={handleRetry} className="btn btn--ghost btn--sm sandbox__retry-btn">
                   Try again
                 </button>
               </div>
             )}
 
-            {/* Score */}
             {score && (
-              <div style={{ padding: "14px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                  <div style={{
-                    fontSize: 28, fontWeight: 800, lineHeight: 1,
-                    color: passed ? "var(--green)" : "var(--text-red)"
-                  }}>
+              <div className="sandbox__result-inner">
+                <div className="sandbox__score-row">
+                  <div className={`sandbox__score ${!passed ? "sandbox__score--fail" : ""}`}>
                     {total}
-                    <span style={{ fontSize: 13, fontWeight: 400, color: "var(--text-dim)" }}>
-                      /{pointsMax}
-                    </span>
+                    <span className="sandbox__score-max">/{pointsMax}</span>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontSize: 12, fontWeight: 600, marginBottom: 2,
-                      color: passed ? "var(--green-text)" : "var(--text-red)"
-                    }}>
+                  <div className="sandbox__score-info">
+                    <div className={`sandbox__score-status ${!passed ? "sandbox__score-status--fail" : ""}`}>
                       {passed ? "Goal reached!" : "Not passed yet"}
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{score.message}</div>
+                    <div className="sandbox__score-message">{score.message}</div>
                   </div>
                 </div>
 
-                {/* Breakdown pills */}
                 {passed && score.breakdown && (
-                  <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+                  <div className="sandbox__breakdown">
                     {[
                       [`+${score.breakdown.completion}`, "completion"],
                       [`+${score.breakdown.time_bonus}`,  "time bonus"],
                       [`${score.time_taken}s`,             "your time"],
                       score.par_time && [`${score.par_time}s`, "par"],
                     ].filter(Boolean).map(([val, lbl]) => (
-                      <span key={lbl} style={{
-                        fontSize: 10, padding: "2px 8px",
-                        background: "var(--bg-card)",
-                        border: "0.5px solid var(--border)",
-                        borderRadius: 20, color: "var(--text-secondary)"
-                      }}>
-                        <span style={{ fontWeight: 600, color: "var(--green)" }}>{val}</span>
-                        {" "}{lbl}
+                      <span key={lbl} className="sandbox__pill">
+                        <span className="sandbox__pill-val">{val}</span> {lbl}
                       </span>
                     ))}
                   </div>
                 )}
 
-                {/* Code quality feedback */}
                 {score.code_feedback?.length > 0 && (
-                  <div style={{ marginBottom: 10 }}>
+                  <div className="sandbox__feedback">
                     {score.code_feedback.map((line, i) => (
-                      <div key={i} style={{
-                        fontSize: 11, marginBottom: 2,
-                        color: line.startsWith("✓") ? "var(--green)" : "var(--amber)"
-                      }}>
+                      <div key={i} className={`sandbox__feedback-line ${line.startsWith("✓") ? "sandbox__feedback-line--good" : "sandbox__feedback-line--warn"}`}>
                         {line}
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Unlock notification */}
                 {passed && nextChallenge && (
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: 8,
-                    padding: "6px 10px", marginBottom: 10,
-                    background: "var(--bg-card)",
-                    border: "0.5px solid var(--border)",
-                    borderRadius: 6
-                  }}>
-                    <span style={{ fontSize: 14 }}>🔓</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--green)" }}>
-                      {nextChallenge.id} unlocked —
-                    </span>
-                    <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                      {nextChallenge.title}
-                    </span>
+                  <div className="sandbox__unlock">
+                    <span className="sandbox__unlock-icon">🔓</span>
+                    <span className="sandbox__unlock-id">{nextChallenge.id} unlocked —</span>
+                    <span className="sandbox__unlock-title">{nextChallenge.title}</span>
                   </div>
                 )}
 
-                {/* Boss complete */}
                 {passed && isBoss && (
-                  <div style={{
-                    padding: "8px 10px", marginBottom: 10, borderRadius: 6,
-                    background: "var(--amber-bg)",
-                    border: "0.5px solid var(--border-amber)",
-                    fontSize: 11, color: "var(--amber-text)", fontWeight: 600
-                  }}>
+                  <div className="sandbox__boss-complete">
                     🏆 Track {challenge.track} complete!
                     {nextChallenge
                       ? ` Track ${challenge.track + 1} is now unlocked.`
@@ -613,60 +435,36 @@ export default function Sandbox() {
                   </div>
                 )}
 
-                {/* Action buttons */}
-                <div style={{ display: "flex", gap: 8 }}>
+                <div className="sandbox__actions">
                   {passed && nextChallenge && (
-                    <button onClick={handleGoNext} style={{
-                      flex: 1, background: "var(--green)", color: "#ffffff",
-                      border: "none", borderRadius: 8,
-                      padding: "10px", fontSize: 13, fontWeight: 700, cursor: "pointer"
-                    }}>
+                    <button onClick={handleGoNext} className="btn btn--green sandbox__action-primary">
                       Next challenge →
                     </button>
                   )}
-                  <button onClick={handleRetry} style={{
-                    flex: passed && nextChallenge ? 0 : 1,
-                    background: "transparent", color: "var(--text-secondary)",
-                    border: "1px solid var(--border)", borderRadius: 8,
-                    padding: "10px 14px", fontSize: 12, cursor: "pointer"
-                  }}>
+                  <button onClick={handleRetry} className={`btn btn--outline sandbox__action-secondary ${passed && nextChallenge ? "" : "sandbox__action-secondary--full"}`}>
                     Try again
                   </button>
                   <button
                     onClick={() => navigate("/challenges")}
                     title="Back to challenge list"
-                    style={{
-                      background: "transparent", color: "var(--text-dim)",
-                      border: "1px solid var(--border)", borderRadius: 8,
-                      padding: "10px 12px", fontSize: 12, cursor: "pointer"
-                    }}
+                    className="btn btn--ghost sandbox__action-icon"
                   >
                     ☰
                   </button>
                 </div>
 
-                {/* Save bot */}
                 {user && passed && (
-                  <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+                  <div className="sandbox__save-bot">
                     <input
                       value={botName}
                       onChange={e => setBotName(e.target.value)}
                       placeholder="Name this solution to save..."
-                      style={{
-                        flex: 1, background: "var(--bg-card)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 6, padding: "6px 10px",
-                        fontSize: 11, color: "var(--text-primary)", fontFamily: "inherit"
-                      }}
+                      className="form-input sandbox__save-input"
                     />
                     <button
                       onClick={handleSaveBot}
                       disabled={!botName.trim()}
-                      style={{
-                        background: "var(--green)", color: "#ffffff", border: "none",
-                        borderRadius: 6, padding: "6px 12px",
-                        fontSize: 11, fontWeight: 600, cursor: "pointer"
-                      }}
+                      className="btn btn--green btn--sm"
                     >
                       Save
                     </button>
@@ -679,25 +477,15 @@ export default function Sandbox() {
       </div>
 
       {/* ── API STRIP ── */}
-      <div style={{
-        borderTop: "1px solid var(--border)",
-        background: "var(--bg-card)",
-        padding: "6px 20px",
-        display: "flex", gap: 32, flexShrink: 0, flexWrap: "wrap"
-      }}>
+      <div className="sandbox__api-strip">
         {[
           { fn: "robot.move(speed, duration)", note: "speed: −1.0 to 1.0 · duration: seconds" },
           { fn: "robot.turn(degrees)",         note: "positive = clockwise" },
           { fn: "robot.wait(duration)",        note: "pause in seconds (0–3)" },
         ].map(({ fn, note }) => (
-          <div key={fn} style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-            <code style={{
-              fontSize: 11, color: "var(--green)",
-              fontFamily: "monospace", fontWeight: 600
-            }}>
-              {fn}
-            </code>
-            <span style={{ fontSize: 10, color: "var(--text-dim)" }}>{note}</span>
+          <div key={fn} className="sandbox__api-item">
+            <code className="sandbox__api-fn">{fn}</code>
+            <span className="sandbox__api-note">{note}</span>
           </div>
         ))}
       </div>
