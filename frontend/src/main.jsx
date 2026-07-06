@@ -4,8 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { ThemeProvider } from "./theme/ThemeContext.jsx";
 import { supabase } from "./supabaseClient.js";
-import "./theme/theme.css";
-import "./index.css";
+import "./karoo.css";
 
 // Process OAuth hash before anything renders
 // This handles the #access_token=... fragment Google sends back
