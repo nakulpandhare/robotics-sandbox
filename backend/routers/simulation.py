@@ -75,7 +75,7 @@ def run_code(request: Request, body: RunRequest):
         raise HTTPException(status_code=500, detail=f"Simulation error: {str(e)}")
 
     # Scoring
-    result       = score_run(frames, challenge)
+    result       = score_run(frames, challenge, code=body.code)
     next_ch      = get_next_challenge(body.challenge_id) if result["passed"] else None
 
     # Build arena data for frontend rendering

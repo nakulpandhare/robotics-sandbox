@@ -1,13 +1,12 @@
 import { useEffect, useRef } from "react";
 
-const SIZE = 520;
+const SIZE  = 360;
 const SCALE = SIZE / 600;
 
-export default function SimCanvas({ frames, obstacles, goal, goals, flags, start }) {
+export default function SimCanvas({ frames, obstacles, goal, goals, flags, start, robotEmoji = "🤖" }) {
   const canvasRef = useRef(null);
   const animRef   = useRef(null);
 
-  // Normalise: always work with an array of goals
   const allGoals = goals?.length ? goals : (goal && goal.w ? [goal] : []);
 
   useEffect(() => {
@@ -30,47 +29,51 @@ export default function SimCanvas({ frames, obstacles, goal, goals, flags, start
 
     function animate() {
       const frame = frames[frameIndex];
-      drawScene(ctx, frame, trail.slice(0, Math.floor(frameIndex / trailStep)), obstacles, allGoals, flags, start);
+      drawScene(ctx, frame, trail.slice(0, Math.floor(frameIndex / trailStep) + 1), obstacles, allGoals, flags, start, robotEmoji);
       frameIndex += playStep;
       if (frameIndex < frames.length) {
         animRef.current = requestAnimationFrame(animate);
       } else {
-        drawScene(ctx, frames[frames.length - 1], trail, obstacles, allGoals, flags, start);
+        drawScene(ctx, frames[frames.length - 1], trail, obstacles, allGoals, flags, start, robotEmoji);
       }
     }
     animate();
     return () => cancelAnimationFrame(animRef.current);
-  }, [frames, obstacles, allGoals, flags]);
+  }, [frames, obstacles, allGoals, flags, robotEmoji]);
 
   return (
     <canvas
       ref={canvasRef}
       width={SIZE}
       height={SIZE}
-      style={{ border: "1px solid #222", borderRadius: 10, display: "block" }}
+      style={{
+        border: "1px solid #e8e4dc",
+        borderRadius: 10, display: "block",
+        background: "#fafaf8"
+      }}
     />
   );
 }
 
 function drawEmpty(ctx, obstacles, goals, flags, start) {
-  ctx.fillStyle = "#161616";
+  ctx.fillStyle = "#fafaf8";
   ctx.fillRect(0, 0, SIZE, SIZE);
   drawGrid(ctx);
   drawObstacles(ctx, obstacles);
   goals?.forEach(g => drawGoal(ctx, g));
   flags?.forEach(f => drawFlag(ctx, f));
   if (start) drawStart(ctx, start);
-  ctx.fillStyle = "#2a2a2a";
-  ctx.font = "13px monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  if (!goals?.length && !obstacles?.length) {
-    ctx.fillText("Write code and click ▶ Run", SIZE / 2, SIZE / 2);
+  if (!goals?.length) {
+    ctx.fillStyle = "#d1d5db";
+    ctx.font = "12px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Write code and click Run", SIZE / 2, SIZE / 2);
   }
 }
 
-function drawScene(ctx, frame, trail, obstacles, goals, flags, start) {
-  ctx.fillStyle = "#161616";
+function drawScene(ctx, frame, trail, obstacles, goals, flags, start, robotEmoji) {
+  ctx.fillStyle = "#fafaf8";
   ctx.fillRect(0, 0, SIZE, SIZE);
   drawGrid(ctx);
   drawObstacles(ctx, obstacles);
@@ -78,17 +81,17 @@ function drawScene(ctx, frame, trail, obstacles, goals, flags, start) {
   flags?.forEach(f => drawFlag(ctx, f));
   if (start) drawStart(ctx, start);
   if (trail?.length > 1) drawTrail(ctx, trail);
-  if (frame) drawRobot(ctx, frame);
+  if (frame) drawRobot(ctx, frame, robotEmoji);
 }
 
 function drawGrid(ctx) {
-  ctx.strokeStyle = "#1c1c1c";
+  ctx.strokeStyle = "#f0ece4";
   ctx.lineWidth = 0.5;
   for (let i = 40; i < SIZE; i += 40) {
-    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, SIZE); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(SIZE, i); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(i * SCALE * (600 / SIZE), 0); ctx.lineTo(i * SCALE * (600 / SIZE), SIZE); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i * SCALE * (600 / SIZE)); ctx.lineTo(SIZE, i * SCALE * (600 / SIZE)); ctx.stroke();
   }
-  ctx.strokeStyle = "#252525";
+  ctx.strokeStyle = "#e8e4dc";
   ctx.lineWidth = 1.5;
   ctx.strokeRect(2, 2, SIZE - 4, SIZE - 4);
 }
@@ -98,19 +101,11 @@ function drawObstacles(ctx, obstacles) {
   for (const obs of obstacles) {
     const x = obs.x * SCALE, y = obs.y * SCALE;
     const w = obs.w * SCALE, h = obs.h * SCALE;
-    ctx.fillStyle = "#1e3a2f";
+    ctx.fillStyle = "#d6d3cd";
     ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = "#22c55e44";
+    ctx.strokeStyle = "#9ca3af";
     ctx.lineWidth = 1;
     ctx.strokeRect(x, y, w, h);
-    ctx.strokeStyle = "#16532d33";
-    ctx.lineWidth = 0.5;
-    for (let i = -h; i < w + h; i += 10) {
-      ctx.beginPath();
-      ctx.moveTo(x + i, y);
-      ctx.lineTo(x + i + h, y + h);
-      ctx.stroke();
-    }
   }
 }
 
@@ -118,21 +113,15 @@ function drawGoal(ctx, goal) {
   if (!goal || !goal.w) return;
   const x = goal.x * SCALE, y = goal.y * SCALE;
   const w = goal.w * SCALE, h = goal.h * SCALE;
-
-  // Glowing green fill
-  ctx.fillStyle = "#14532d55";
+  ctx.fillStyle = "rgba(15, 110, 86, 0.08)";
   ctx.fillRect(x, y, w, h);
-
-  // Dashed border
-  ctx.strokeStyle = "#22c55e";
+  ctx.strokeStyle = "#0f6e56";
   ctx.lineWidth = 2;
-  ctx.setLineDash([6, 3]);
+  ctx.setLineDash([5, 3]);
   ctx.strokeRect(x, y, w, h);
   ctx.setLineDash([]);
-
-  // Label
-  ctx.fillStyle = "#22c55e";
-  ctx.font = "bold 11px monospace";
+  ctx.fillStyle = "#0f6e56";
+  ctx.font = `bold ${Math.max(9, Math.floor(w / 4))}px sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText("GOAL", x + w / 2, y + h / 2);
@@ -142,21 +131,14 @@ function drawFlag(ctx, flag) {
   if (!flag) return;
   const x = flag.x * SCALE;
   const y = flag.y * SCALE;
-  const colour = flag.colour === "red" ? "#ef4444" : "#22c55e";
-
-  // Flag pole
+  const colour = flag.colour === "red" ? "#dc2626" : "#0f6e56";
   ctx.strokeStyle = colour;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(x, y + 12);
-  ctx.lineTo(x, y - 12);
-  ctx.stroke();
-
-  // Flag triangle
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x, y + 10); ctx.lineTo(x, y - 10); ctx.stroke();
   ctx.fillStyle = colour;
   ctx.beginPath();
-  ctx.moveTo(x, y - 12);
-  ctx.lineTo(x + 10, y - 6);
+  ctx.moveTo(x, y - 10);
+  ctx.lineTo(x + 8, y - 5);
   ctx.lineTo(x, y);
   ctx.closePath();
   ctx.fill();
@@ -167,31 +149,29 @@ function drawStart(ctx, start) {
   const x = start.x * SCALE;
   const y = start.y * SCALE;
   ctx.beginPath();
-  ctx.arc(x, y, 6, 0, Math.PI * 2);
-  ctx.fillStyle = "#854d0e";
+  ctx.arc(x, y, 5, 0, Math.PI * 2);
+  ctx.fillStyle = "#d97706";
   ctx.fill();
-  ctx.font = "10px monospace";
-  ctx.fillStyle = "#a16207";
+  ctx.font = "9px sans-serif";
+  ctx.fillStyle = "#92400e";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText("START", x + 10, y);
+  ctx.fillText("START", x + 8, y);
 }
 
 function drawTrail(ctx, trail) {
   if (trail.length < 2) return;
   ctx.beginPath();
   ctx.moveTo(trail[0].x, trail[0].y);
-  for (let i = 1; i < trail.length; i++) {
-    ctx.lineTo(trail[i].x, trail[i].y);
-  }
-  ctx.strokeStyle = "#14532d";
+  for (let i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+  ctx.strokeStyle = "rgba(15, 110, 86, 0.25)";
   ctx.lineWidth = 1.5;
   ctx.setLineDash([3, 4]);
   ctx.stroke();
   ctx.setLineDash([]);
 }
 
-function drawRobot(ctx, frame) {
+function drawRobot(ctx, frame, emoji = "🤖") {
   const x   = frame.x * SCALE;
   const y   = frame.y * SCALE;
   const rad = (frame.angle * Math.PI) / 180;
@@ -201,26 +181,22 @@ function drawRobot(ctx, frame) {
   ctx.translate(x, y);
   ctx.rotate(rad);
 
-  ctx.shadowColor = "#22c55e";
-  ctx.shadowBlur  = 14;
-
+  // Direction indicator
+  ctx.strokeStyle = "#d97706";
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.arc(0, 0, R, 0, Math.PI * 2);
-  ctx.fillStyle   = "#22c55e";
-  ctx.fill();
-  ctx.strokeStyle = "#16a34a";
-  ctx.lineWidth   = 2;
+  ctx.moveTo(0, 0);
+  ctx.lineTo(R + 4, 0);
   ctx.stroke();
 
-  ctx.shadowBlur = 0;
+  ctx.restore();
 
-  ctx.beginPath();
-  ctx.moveTo(2, 0);
-  ctx.lineTo(R - 1, 0);
-  ctx.strokeStyle = "#052e16";
-  ctx.lineWidth   = 2.5;
-  ctx.lineCap     = "round";
-  ctx.stroke();
-
+  // Draw emoji centred on position
+  ctx.save();
+  ctx.font = `${R * 1.6}px sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(emoji, x, y);
   ctx.restore();
 }
