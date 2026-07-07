@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Editor from "@monaco-editor/react";
 import axios from "axios";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -22,15 +22,106 @@ robot.turn(90)
 robot.move(1.0, 3.0)
 `;
 
+// ── Drag handle ───────────────────────────────────────────────
+function DragHandle({ direction, onMouseDown }) {
+  const isH = direction === "horizontal";
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        flexShrink: 0,
+        width:  isH ? 5 : "100%",
+        height: isH ? "100%" : 5,
+        cursor: isH ? "col-resize" : "row-resize",
+        background: hovered ? "var(--amber)" : "var(--border)",
+        transition: "background 0.15s",
+        position: "relative",
+        zIndex: 10,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div style={{
+        display: "flex",
+        flexDirection: isH ? "column" : "row",
+        gap: 3,
+        pointerEvents: "none",
+      }}>
+        {[0,1,2].map(i => (
+          <div key={i} style={{
+            width: 3, height: 3,
+            borderRadius: "50%",
+            background: hovered ? "rgba(255,255,255,0.9)" : "var(--text-dim)",
+            transition: "background 0.15s",
+          }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────
 export default function Sandbox() {
-  const [searchParams]  = useSearchParams();
+  const [searchParams]   = useSearchParams();
   const challengeFromUrl = searchParams.get("challenge");
   const navigate         = useNavigate();
   const { theme }        = useTheme();
   const isDark           = theme === "dark";
+  const editorTheme      = isDark ? "vs-dark" : "vs";
 
-  const editorTheme = isDark ? "vs-dark" : "vs";
+  // ── Resizable panel sizes ─────────────────────────────────
+  const [rightWidth,    setRightWidth]    = useState(420);
+  const [consoleHeight, setConsoleHeight] = useState(110);
 
+  const dragState = useRef(null); // { type, startPos, startSize }
+
+  const onHorizontalDragStart = useCallback((e) => {
+    e.preventDefault();
+    dragState.current = { type: "horizontal", startPos: e.clientX, startSize: rightWidth };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, [rightWidth]);
+
+  const onVerticalDragStart = useCallback((e) => {
+    e.preventDefault();
+    dragState.current = { type: "vertical", startPos: e.clientY, startSize: consoleHeight };
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+  }, [consoleHeight]);
+
+  useEffect(() => {
+    function onMouseMove(e) {
+      if (!dragState.current) return;
+      const { type, startPos, startSize } = dragState.current;
+      if (type === "horizontal") {
+        // Dragging left = more canvas width; dragging right = less canvas width
+        const delta = startPos - e.clientX;
+        setRightWidth(Math.max(280, Math.min(700, startSize + delta)));
+      } else {
+        // Dragging UP = smaller console (negative delta shrinks it)
+        const delta = startPos - e.clientY;
+        setConsoleHeight(Math.max(40, Math.min(320, startSize + delta)));
+      }
+    }
+    function onMouseUp() {
+      if (!dragState.current) return;
+      dragState.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
+  // ── State ─────────────────────────────────────────────────
   const [code, setCode]               = useState(STARTER_CODE);
   const [frames, setFrames]           = useState([]);
   const [obstacles, setObstacles]     = useState([]);
@@ -55,12 +146,14 @@ export default function Sandbox() {
   const [botName, setBotName]         = useState("");
   const [gallery, setGallery]         = useState([]);
 
+  // ── Auth ──────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user || null));
     const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user || null));
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  // ── Load challenges ───────────────────────────────────────
   useEffect(() => {
     axios.get(`${API}/challenges`).then(res => {
       const list = res.data.challenges;
@@ -74,6 +167,7 @@ export default function Sandbox() {
     });
   }, [challengeFromUrl]);
 
+  // ── Reset on challenge change ─────────────────────────────
   useEffect(() => {
     if (!challenge) return;
     setFrames([]);
@@ -99,6 +193,7 @@ export default function Sandbox() {
     getPublicGallery(challenge.id).then(setGallery);
   }, [user, challenge]);
 
+  // ── Handlers ─────────────────────────────────────────────
   function revealHint(i, cost) {
     setHintsUsed(i + 1);
     setHintPenalty(p => p + cost);
@@ -186,32 +281,37 @@ export default function Sandbox() {
   const passed     = score?.passed;
   const total      = score?.breakdown?.total ?? score?.score ?? 0;
 
+  // ── Render ────────────────────────────────────────────────
   return (
     <div className="sandbox">
 
       {/* ── TOP NAV ── */}
       <nav className="sandbox__nav">
         <button className="nav__logo" onClick={() => navigate("/challenges")}>
-          KA<span>ROO</span>
+          ← KA<span>ROO</span>
         </button>
 
         <div className="sandbox__divider" />
 
         {challenge && (
-          <div className="sandbox__challenge-info">
+          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: 1 }}>
             <span className={`badge ${isBoss ? "badge--amber" : "badge--green"}`}>
               {challenge.id}{isBoss ? " · BOSS" : ""}
             </span>
-            <span className="sandbox__challenge-title">{challenge.title}</span>
-            <span className="sandbox__challenge-concept">{challenge.concept}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {challenge.title}
+            </span>
+            <span style={{ fontSize: 11, color: "var(--text-dim)", fontFamily: "monospace", flexShrink: 0 }}>
+              {challenge.concept}
+            </span>
           </div>
         )}
 
-        <div className="sandbox__nav-right">
-          <span className="sandbox__status">{status}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginLeft: "auto" }}>
+          <span style={{ fontSize: 11, color: "var(--text-dim)" }}>{status}</span>
 
           {personalBest && (
-            <span className="sandbox__best">
+            <span style={{ fontSize: 11, color: "var(--green)", fontWeight: 600 }}>
               Best: {personalBest.score}/{pointsMax}
             </span>
           )}
@@ -225,10 +325,9 @@ export default function Sandbox() {
           {user ? (
             <img
               src={user.user_metadata?.avatar_url}
-              alt=""
-              className="nav__avatar"
+              alt="" title="Click to sign out"
               onClick={() => supabase.auth.signOut()}
-              title="Click to sign out"
+              style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid var(--border)", cursor: "pointer" }}
             />
           ) : (
             <button
@@ -252,29 +351,25 @@ export default function Sandbox() {
             {challenge.workshop_link || challenge.description}
           </span>
 
-          <div className="sandbox__hints">
+          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
             {hints.map((hint, i) => {
               const cost     = i === 0 ? 0 : i === 1 ? 10 : 20;
               const revealed = i < hintsUsed;
-              if (revealed) {
-                return (
-                  <span key={i} className="sandbox__hint sandbox__hint--revealed">
-                    💡 {hint}
-                  </span>
-                );
-              }
-              if (i === hintsUsed) {
-                return (
-                  <button key={i} onClick={() => revealHint(i, cost)} className="sandbox__hint sandbox__hint--button">
-                    💡 Hint {i + 1} {cost > 0 ? `(-${cost} pts)` : "(free)"}
-                  </button>
-                );
-              }
+              if (revealed) return (
+                <span key={i} style={{ fontSize: 10, padding: "2px 10px", maxWidth: 240, background: "var(--amber-bg)", border: "0.5px solid var(--border-amber)", borderRadius: 20, color: "var(--amber-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  💡 {hint}
+                </span>
+              );
+              if (i === hintsUsed) return (
+                <button key={i} onClick={() => revealHint(i, cost)} style={{ fontSize: 10, padding: "2px 10px", background: "var(--bg-card)", border: "0.5px solid var(--border-amber)", borderRadius: 20, color: "var(--amber-text)", cursor: "pointer" }}>
+                  💡 Hint {i + 1} {cost > 0 ? `(-${cost} pts)` : "(free)"}
+                </button>
+              );
               return null;
             })}
           </div>
 
-          <span className={`badge ${isBoss ? "badge--amber" : "badge--green"} sandbox__pass-badge`}>
+          <span className={`badge ${isBoss ? "badge--amber" : "badge--green"}`}>
             {passThresh}+ to pass · {pointsMax} pts
             {hintPenalty > 0 && ` · -${hintPenalty} hint`}
           </span>
@@ -284,9 +379,11 @@ export default function Sandbox() {
       {/* ── WORKSPACE ── */}
       <div className="sandbox__workspace">
 
-        {/* Editor + console */}
+        {/* ── LEFT: editor + console ── */}
         <div className="sandbox__editor-col">
-          <div className="sandbox__editor-wrap">
+
+          {/* Editor */}
+          <div style={{ flex: 1, overflow: "hidden", minHeight: 0 }}>
             <Editor
               height="100%"
               defaultLanguage="python"
@@ -305,33 +402,52 @@ export default function Sandbox() {
             />
           </div>
 
-          {/* Console */}
-          <div className="sandbox__console">
+          {/* ── Vertical drag handle ── */}
+          <DragHandle direction="vertical" onMouseDown={onVerticalDragStart} />
+
+          {/* Console — height controlled by drag */}
+          <div style={{
+            height: consoleHeight,
+            flexShrink: 0,
+            background: "var(--console-bg)",
+            borderTop: "1px solid var(--console-border)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}>
             <div className="sandbox__console-label">
               CONSOLE
               {hintPenalty > 0 && (
-                <span className="sandbox__console-penalty"> · hint penalty: -{hintPenalty} pts</span>
+                <span style={{ color: "var(--amber)", marginLeft: 8 }}>· hint penalty: -{hintPenalty} pts</span>
               )}
             </div>
             <div className="sandbox__console-body">
-              {error && <span className="sandbox__console-error">✖ {error}</span>}
+              {error && <span style={{ color: "var(--text-red)" }}>✖ {error}</span>}
               {!error && consoleOut.length === 0 && (
-                <span className="sandbox__console-empty">No output. Click Run.</span>
+                <span style={{ color: "var(--text-dim)" }}>No output. Click Run.</span>
               )}
               {consoleOut.map((line, i) => (
-                <div key={i} className="sandbox__console-line">
-                  <span className="sandbox__console-arrow">{">"}</span>
-                  {line}
+                <div key={i} style={{ color: "var(--green)" }}>
+                  <span style={{ color: "var(--green-text)", marginRight: 8 }}>{">"}</span>{line}
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
-        <div className="sandbox__right">
+        {/* ── Horizontal drag handle (editor | canvas) ── */}
+        <DragHandle direction="horizontal" onMouseDown={onHorizontalDragStart} />
 
-          {/* Canvas */}
+        {/* ── RIGHT: canvas + result ── */}
+        <div style={{
+          width: rightWidth,
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          background: "var(--bg-dark)",
+        }}>
+
+          {/* Canvas area */}
           <div className="sandbox__canvas-area">
             <SimCanvas
               frames={frames}
@@ -344,6 +460,7 @@ export default function Sandbox() {
               isDark={isDark}
             />
 
+            {/* Robot emoji picker */}
             <div className="sandbox__emoji-picker">
               <span className="sandbox__emoji-label">ROBOT</span>
               {ROBOT_EMOJIS.map(e => (
@@ -359,40 +476,41 @@ export default function Sandbox() {
             </div>
           </div>
 
-          {/* ── INLINE RESULT ── */}
+          {/* ── Inline result ── */}
           <div className={`sandbox__result ${score ? (passed ? "sandbox__result--pass" : "sandbox__result--fail") : ""}`}>
 
             {!score && !error && (
-              <div className="sandbox__result-inner sandbox__result-empty">
+              <div className="sandbox__result-inner" style={{ fontSize: 12, color: "var(--text-dim)" }}>
                 Write code and click ▶ Run to test your solution.
               </div>
             )}
 
             {error && !score && (
               <div className="sandbox__result-inner">
-                <div className="sandbox__error-title">Error</div>
-                <div className="sandbox__error-msg">{error}</div>
-                <button onClick={handleRetry} className="btn btn--ghost btn--sm sandbox__retry-btn">
-                  Try again
-                </button>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-red)", marginBottom: 4 }}>Error</div>
+                <div style={{ fontSize: 12, color: "var(--text-red)", marginBottom: 8 }}>{error}</div>
+                <button onClick={handleRetry} className="btn btn--ghost btn--sm">Try again</button>
               </div>
             )}
 
             {score && (
               <div className="sandbox__result-inner">
-                <div className="sandbox__score-row">
+
+                {/* Score row */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                   <div className={`sandbox__score ${!passed ? "sandbox__score--fail" : ""}`}>
                     {total}
                     <span className="sandbox__score-max">/{pointsMax}</span>
                   </div>
-                  <div className="sandbox__score-info">
-                    <div className={`sandbox__score-status ${!passed ? "sandbox__score-status--fail" : ""}`}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: passed ? "var(--green-text)" : "var(--text-red)", marginBottom: 2 }}>
                       {passed ? "Goal reached!" : "Not passed yet"}
                     </div>
-                    <div className="sandbox__score-message">{score.message}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{score.message}</div>
                   </div>
                 </div>
 
+                {/* Breakdown pills */}
                 {passed && score.breakdown && (
                   <div className="sandbox__breakdown">
                     {[
@@ -408,64 +526,60 @@ export default function Sandbox() {
                   </div>
                 )}
 
+                {/* Code quality feedback */}
                 {score.code_feedback?.length > 0 && (
-                  <div className="sandbox__feedback">
+                  <div style={{ marginBottom: 8 }}>
                     {score.code_feedback.map((line, i) => (
-                      <div key={i} className={`sandbox__feedback-line ${line.startsWith("✓") ? "sandbox__feedback-line--good" : "sandbox__feedback-line--warn"}`}>
+                      <div key={i} style={{ fontSize: 11, marginBottom: 2, color: line.startsWith("✓") ? "var(--green)" : "var(--amber)" }}>
                         {line}
                       </div>
                     ))}
                   </div>
                 )}
 
+                {/* Unlock notification */}
                 {passed && nextChallenge && (
                   <div className="sandbox__unlock">
-                    <span className="sandbox__unlock-icon">🔓</span>
-                    <span className="sandbox__unlock-id">{nextChallenge.id} unlocked —</span>
-                    <span className="sandbox__unlock-title">{nextChallenge.title}</span>
+                    <span>🔓</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--green)" }}>{nextChallenge.id} unlocked —</span>
+                    <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{nextChallenge.title}</span>
                   </div>
                 )}
 
+                {/* Boss complete */}
                 {passed && isBoss && (
-                  <div className="sandbox__boss-complete">
+                  <div className="sandbox__boss-complete" style={{ padding: "7px 10px", marginBottom: 8, borderRadius: 6, background: "var(--amber-bg)", border: "0.5px solid var(--border-amber)", fontSize: 11, color: "var(--amber-text)", fontWeight: 600 }}>
                     🏆 Track {challenge.track} complete!
-                    {nextChallenge
-                      ? ` Track ${challenge.track + 1} is now unlocked.`
-                      : " More tracks coming soon!"}
+                    {nextChallenge ? ` Track ${challenge.track + 1} unlocked.` : " More coming soon!"}
                   </div>
                 )}
 
+                {/* Actions */}
                 <div className="sandbox__actions">
                   {passed && nextChallenge && (
-                    <button onClick={handleGoNext} className="btn btn--green sandbox__action-primary">
+                    <button onClick={handleGoNext} className="btn btn--green" style={{ flex: 1, padding: "9px", fontSize: 13, fontWeight: 700 }}>
                       Next challenge →
                     </button>
                   )}
-                  <button onClick={handleRetry} className={`btn btn--outline sandbox__action-secondary ${passed && nextChallenge ? "" : "sandbox__action-secondary--full"}`}>
+                  <button onClick={handleRetry} className="btn btn--outline" style={{ flex: passed && nextChallenge ? 0 : 1, padding: "9px 13px", fontSize: 12 }}>
                     Try again
                   </button>
-                  <button
-                    onClick={() => navigate("/challenges")}
-                    title="Back to challenge list"
-                    className="btn btn--ghost sandbox__action-icon"
-                  >
+                  <button onClick={() => navigate("/challenges")} title="Back to challenge list" className="btn btn--ghost" style={{ padding: "9px 11px", fontSize: 12 }}>
                     ☰
                   </button>
                 </div>
 
+                {/* Save bot */}
                 {user && passed && (
-                  <div className="sandbox__save-bot">
+                  <div className="sandbox__save-bot" style={{ marginTop: 8, display: "flex", gap: 6 }}>
                     <input
                       value={botName}
                       onChange={e => setBotName(e.target.value)}
                       placeholder="Name this solution to save..."
-                      className="form-input sandbox__save-input"
+                      className="form-input"
+                      style={{ flex: 1, fontSize: 11 }}
                     />
-                    <button
-                      onClick={handleSaveBot}
-                      disabled={!botName.trim()}
-                      className="btn btn--green btn--sm"
-                    >
+                    <button onClick={handleSaveBot} disabled={!botName.trim()} className="btn btn--green btn--sm">
                       Save
                     </button>
                   </div>
