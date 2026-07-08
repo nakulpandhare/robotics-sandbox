@@ -280,7 +280,7 @@ export default function Sandbox() {
       if (type === "horizontal") {
         setRightWidth(Math.max(280, Math.min(700, startSize + (startPos - e.clientX))));
       } else {
-        setConsoleHeight(Math.max(40, Math.min(320, startSize + (e.clientY - startPos))));
+        setConsoleHeight(Math.max(40, Math.min(320, startSize - (e.clientY - startPos))));
       }
     }
     function onPointerUp() {
