@@ -5,7 +5,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 import { useTheme } from "./theme/ThemeContext";
 import ThemeToggle from "./theme/ThemeToggle";
-import { saveRun, getPersonalBest, saveBot, listMyBots, togglePublic, getPublicGallery } from "./api/runs";
+import { saveRun, getPersonalBest, saveBot, listMyBots, togglePublic, getPublicGallery, getLeaderboard } from "./api/runs";
 import { markChallengeComplete } from "./api/progress";
 import SimCanvas from "./SimCanvas";
 
@@ -23,12 +23,12 @@ robot.move(1.0, 3.0)
 `;
 
 // ── Drag handle ───────────────────────────────────────────────
-function DragHandle({ direction, onMouseDown }) {
+function DragHandle({ direction, onPointerDown }) {
   const isH = direction === "horizontal";
   const [hovered, setHovered] = useState(false);
   return (
     <div
-      onMouseDown={onMouseDown}
+      onPointerDown={onPointerDown}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -43,22 +43,201 @@ function DragHandle({ direction, onMouseDown }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        touchAction: "none",
       }}
     >
-      <div style={{
-        display: "flex",
-        flexDirection: isH ? "column" : "row",
-        gap: 3,
-        pointerEvents: "none",
-      }}>
+      <div style={{ display: "flex", flexDirection: isH ? "column" : "row", gap: 3, pointerEvents: "none" }}>
         {[0,1,2].map(i => (
           <div key={i} style={{
-            width: 3, height: 3,
-            borderRadius: "50%",
+            width: 3, height: 3, borderRadius: "50%",
             background: hovered ? "rgba(255,255,255,0.9)" : "var(--text-dim)",
             transition: "background 0.15s",
           }} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Leaderboard modal ─────────────────────────────────────────
+function LeaderboardModal({ challenge, onClose }) {
+  const [rows, setRows]       = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!challenge) return;
+    setLoading(true);
+    getLeaderboard(challenge.id).then(data => {
+      setRows(data || []);
+      setLoading(false);
+    });
+  }, [challenge]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    /* Backdrop */
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0,
+        background: "rgba(0,0,0,0.45)",
+        backdropFilter: "blur(3px)",
+        zIndex: 1000,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+    >
+      {/* Modal card — stop clicks bubbling to backdrop */}
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: 440, maxHeight: "80vh",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border)",
+          borderRadius: 16,
+          boxShadow: "0 24px 64px rgba(0,0,0,0.25)",
+          display: "flex", flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 20px",
+          borderBottom: "1px solid var(--border)",
+          flexShrink: 0,
+        }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+              <span style={{ fontSize: 18 }}>🏆</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
+                Leaderboard
+              </span>
+            </div>
+            {challenge && (
+              <div style={{ fontSize: 11, color: "var(--text-dim)", fontFamily: "monospace" }}>
+                {challenge.id} · {challenge.title}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "var(--bg-dark)", border: "1px solid var(--border)",
+              borderRadius: 8, width: 32, height: 32,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", fontSize: 16, color: "var(--text-secondary)",
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {loading && (
+            <div style={{ padding: 40, textAlign: "center", color: "var(--text-dim)", fontSize: 13 }}>
+              Loading...
+            </div>
+          )}
+
+          {!loading && rows.length === 0 && (
+            <div style={{ padding: 48, textAlign: "center" }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🎯</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
+                No scores yet
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-dim)" }}>
+                Be the first to complete this challenge!
+              </div>
+            </div>
+          )}
+
+          {!loading && rows.map((row, i) => {
+            const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+            const isTop = i === 0;
+            return (
+              <div
+                key={row.user_id}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "12px 20px",
+                  borderBottom: "1px solid var(--border)",
+                  background: isTop ? "var(--bg-amber)" : "transparent",
+                  transition: "background 0.1s",
+                }}
+                onMouseEnter={e => { if (!isTop) e.currentTarget.style.background = "var(--bg-dark)"; }}
+                onMouseLeave={e => { if (!isTop) e.currentTarget.style.background = "transparent"; }}
+              >
+                {/* Rank */}
+                <div style={{
+                  width: 28, textAlign: "center", flexShrink: 0,
+                  fontSize: medal ? 18 : 13, fontWeight: 700,
+                  color: i === 0 ? "#f59e0b" : i === 1 ? "#9ca3af" : i === 2 ? "#d97706" : "var(--text-dim)",
+                }}>
+                  {medal || i + 1}
+                </div>
+
+                {/* Avatar */}
+                {row.profiles?.avatar_url ? (
+                  <img src={row.profiles.avatar_url} alt=""
+                    style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, border: "2px solid var(--border)" }} />
+                ) : (
+                  <div style={{
+                    width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+                    background: "var(--amber-bg)", border: "1.5px solid var(--border-amber)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 12, fontWeight: 700, color: "var(--amber-text)",
+                  }}>
+                    {(row.profiles?.username || "?")[0].toUpperCase()}
+                  </div>
+                )}
+
+                {/* Name */}
+                <span style={{
+                  fontSize: 13, color: "var(--text-primary)", flex: 1,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  fontWeight: isTop ? 600 : 400,
+                }}>
+                  {row.profiles?.username || "anonymous"}
+                </span>
+
+                {/* Score + time */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, flexShrink: 0 }}>
+                  <span style={{
+                    fontSize: 15, fontWeight: 800,
+                    color: isTop ? "var(--amber)" : "var(--green)",
+                  }}>
+                    {row.score}
+                  </span>
+                  <span style={{ fontSize: 10, color: "var(--text-dim)" }}>
+                    {row.time_taken}s
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: "12px 20px",
+          borderTop: "1px solid var(--border)",
+          fontSize: 11, color: "var(--text-dim)",
+          flexShrink: 0, textAlign: "center",
+          background: "var(--bg-dark)",
+        }}>
+          {rows.length > 0
+            ? `${rows.length} student${rows.length !== 1 ? "s" : ""} have completed this challenge`
+            : "Complete the challenge to appear here"}
+          <span style={{ marginLeft: 8, color: "var(--text-dim)", opacity: 0.6 }}>· Esc to close</span>
+        </div>
       </div>
     </div>
   );
@@ -73,14 +252,14 @@ export default function Sandbox() {
   const isDark           = theme === "dark";
   const editorTheme      = isDark ? "vs-dark" : "vs";
 
-  // ── Resizable panel sizes ─────────────────────────────────
+  // Resizable panels
   const [rightWidth,    setRightWidth]    = useState(420);
   const [consoleHeight, setConsoleHeight] = useState(110);
-
-  const dragState = useRef(null); // { type, startPos, startSize }
+  const dragState = useRef(null);
 
   const onHorizontalDragStart = useCallback((e) => {
     e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
     dragState.current = { type: "horizontal", startPos: e.clientX, startSize: rightWidth };
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
@@ -88,40 +267,37 @@ export default function Sandbox() {
 
   const onVerticalDragStart = useCallback((e) => {
     e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
     dragState.current = { type: "vertical", startPos: e.clientY, startSize: consoleHeight };
     document.body.style.cursor = "row-resize";
     document.body.style.userSelect = "none";
   }, [consoleHeight]);
 
   useEffect(() => {
-    function onMouseMove(e) {
+    function onPointerMove(e) {
       if (!dragState.current) return;
       const { type, startPos, startSize } = dragState.current;
       if (type === "horizontal") {
-        // Dragging left = more canvas width; dragging right = less canvas width
-        const delta = startPos - e.clientX;
-        setRightWidth(Math.max(280, Math.min(700, startSize + delta)));
+        setRightWidth(Math.max(280, Math.min(700, startSize + (startPos - e.clientX))));
       } else {
-        // Dragging UP = smaller console (negative delta shrinks it)
-        const delta = startPos - e.clientY;
-        setConsoleHeight(Math.max(40, Math.min(320, startSize + delta)));
+        setConsoleHeight(Math.max(40, Math.min(320, startSize + (e.clientY - startPos))));
       }
     }
-    function onMouseUp() {
+    function onPointerUp() {
       if (!dragState.current) return;
       dragState.current = null;
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     }
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup",   onPointerUp);
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup",   onPointerUp);
     };
   }, []);
 
-  // ── State ─────────────────────────────────────────────────
+  // State
   const [code, setCode]               = useState(STARTER_CODE);
   const [frames, setFrames]           = useState([]);
   const [obstacles, setObstacles]     = useState([]);
@@ -145,15 +321,14 @@ export default function Sandbox() {
   const [robotEmoji, setRobotEmoji]   = useState("🤖");
   const [botName, setBotName]         = useState("");
   const [gallery, setGallery]         = useState([]);
+  const [lbOpen, setLbOpen]           = useState(false);
 
-  // ── Auth ──────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user || null));
     const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user || null));
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // ── Load challenges ───────────────────────────────────────
   useEffect(() => {
     axios.get(`${API}/challenges`).then(res => {
       const list = res.data.challenges;
@@ -167,7 +342,6 @@ export default function Sandbox() {
     });
   }, [challengeFromUrl]);
 
-  // ── Reset on challenge change ─────────────────────────────
   useEffect(() => {
     if (!challenge) return;
     setFrames([]);
@@ -193,7 +367,6 @@ export default function Sandbox() {
     getPublicGallery(challenge.id).then(setGallery);
   }, [user, challenge]);
 
-  // ── Handlers ─────────────────────────────────────────────
   function revealHint(i, cost) {
     setHintsUsed(i + 1);
     setHintPenalty(p => p + cost);
@@ -228,13 +401,8 @@ export default function Sandbox() {
     setScore(null);
     setNextChallenge(null);
     setStatus("Running...");
-
     try {
-      const res = await axios.post(`${API}/run`, {
-        code,
-        challenge_id: challenge.id,
-      });
-
+      const res = await axios.post(`${API}/run`, { code, challenge_id: challenge.id });
       setFrames(res.data.frames);
       setObstacles(res.data.obstacles || []);
       setGoals(res.data.goals || []);
@@ -242,32 +410,22 @@ export default function Sandbox() {
       setFlags(res.data.flags || []);
       setStart(res.data.start || null);
       setConsoleOut(res.data.console || []);
-
       const next = res.data.next_challenge || null;
       setNextChallenge(next);
-
       let result = res.data.score;
       if (hintPenalty > 0 && result) {
         const penalised = Math.max(0, result.score - hintPenalty);
-        result = {
-          ...result,
-          score: penalised,
-          breakdown: { ...result.breakdown, hint_penalty: hintPenalty, total: penalised }
-        };
+        result = { ...result, score: penalised, breakdown: { ...result.breakdown, hint_penalty: hintPenalty, total: penalised } };
       }
       setScore(result);
-
       if (user && challenge) {
         await saveRun({ user, challengeId: challenge.id, score: result.score, timeTaken: result.time_taken, passed: result.passed, code });
         getPersonalBest(user, challenge.id).then(setPersonalBest);
-        if (result.passed) {
-          await markChallengeComplete(user, challenge.id, result.score, next ? [next.id] : []);
-        }
+        if (result.passed) await markChallengeComplete(user, challenge.id, result.score, next ? [next.id] : []);
       }
       setStatus(`Done — ${res.data.total_frames} frames`);
     } catch (err) {
-      const msg = err.response?.data?.detail || "Something went wrong";
-      setError(msg);
+      setError(err.response?.data?.detail || "Something went wrong");
       setStatus("Error");
     } finally {
       setRunning(false);
@@ -281,14 +439,21 @@ export default function Sandbox() {
   const passed     = score?.passed;
   const total      = score?.breakdown?.total ?? score?.score ?? 0;
 
-  // ── Render ────────────────────────────────────────────────
   return (
     <div className="sandbox">
+
+      {/* ── Leaderboard modal (portal-style, rendered above everything) ── */}
+      {lbOpen && (
+        <LeaderboardModal
+          challenge={challenge}
+          onClose={() => setLbOpen(false)}
+        />
+      )}
 
       {/* ── TOP NAV ── */}
       <nav className="sandbox__nav">
         <button className="nav__logo" onClick={() => navigate("/challenges")}>
-          ← KA<span>ROO</span>
+          KA<span>ROO</span>
         </button>
 
         <div className="sandbox__divider" />
@@ -318,6 +483,21 @@ export default function Sandbox() {
 
           <button className="btn--run" onClick={handleRun} disabled={running}>
             {running ? "⏳ Running..." : "▶  Run"}
+          </button>
+
+          <button
+            onClick={() => setLbOpen(true)}
+            title="Open leaderboard"
+            style={{
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: 8, padding: "6px 12px",
+              fontSize: 13, cursor: "pointer",
+              color: "var(--text-secondary)",
+              display: "flex", alignItems: "center", gap: 5,
+            }}
+          >
+            🏆 <span style={{ fontSize: 12 }}>Leaderboard</span>
           </button>
 
           <ThemeToggle size="sm" />
@@ -350,7 +530,6 @@ export default function Sandbox() {
           <span className="sandbox__banner-text">
             {challenge.workshop_link || challenge.description}
           </span>
-
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
             {hints.map((hint, i) => {
               const cost     = i === 0 ? 0 : i === 1 ? 10 : 20;
@@ -368,7 +547,6 @@ export default function Sandbox() {
               return null;
             })}
           </div>
-
           <span className={`badge ${isBoss ? "badge--amber" : "badge--green"}`}>
             {passThresh}+ to pass · {pointsMax} pts
             {hintPenalty > 0 && ` · -${hintPenalty} hint`}
@@ -379,10 +557,8 @@ export default function Sandbox() {
       {/* ── WORKSPACE ── */}
       <div className="sandbox__workspace">
 
-        {/* ── LEFT: editor + console ── */}
+        {/* LEFT: editor + console */}
         <div className="sandbox__editor-col">
-
-          {/* Editor */}
           <div style={{ flex: 1, overflow: "hidden", minHeight: 0 }}>
             <Editor
               height="100%"
@@ -402,18 +578,13 @@ export default function Sandbox() {
             />
           </div>
 
-          {/* ── Vertical drag handle ── */}
-          <DragHandle direction="vertical" onMouseDown={onVerticalDragStart} />
+          <DragHandle direction="vertical" onPointerDown={onVerticalDragStart} />
 
-          {/* Console — height controlled by drag */}
           <div style={{
-            height: consoleHeight,
-            flexShrink: 0,
+            height: consoleHeight, flexShrink: 0,
             background: "var(--console-bg)",
             borderTop: "1px solid var(--console-border)",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
+            display: "flex", flexDirection: "column", overflow: "hidden",
           }}>
             <div className="sandbox__console-label">
               CONSOLE
@@ -423,9 +594,7 @@ export default function Sandbox() {
             </div>
             <div className="sandbox__console-body">
               {error && <span style={{ color: "var(--text-red)" }}>✖ {error}</span>}
-              {!error && consoleOut.length === 0 && (
-                <span style={{ color: "var(--text-dim)" }}>No output. Click Run.</span>
-              )}
+              {!error && consoleOut.length === 0 && <span style={{ color: "var(--text-dim)" }}>No output. Click Run.</span>}
               {consoleOut.map((line, i) => (
                 <div key={i} style={{ color: "var(--green)" }}>
                   <span style={{ color: "var(--green-text)", marginRight: 8 }}>{">"}</span>{line}
@@ -435,56 +604,35 @@ export default function Sandbox() {
           </div>
         </div>
 
-        {/* ── Horizontal drag handle (editor | canvas) ── */}
-        <DragHandle direction="horizontal" onMouseDown={onHorizontalDragStart} />
+        <DragHandle direction="horizontal" onPointerDown={onHorizontalDragStart} />
 
-        {/* ── RIGHT: canvas + result ── */}
-        <div style={{
-          width: rightWidth,
-          flexShrink: 0,
-          display: "flex",
-          flexDirection: "column",
-          background: "var(--bg-dark)",
-        }}>
+        {/* RIGHT: canvas + result */}
+        <div style={{ width: rightWidth, flexShrink: 0, display: "flex", flexDirection: "column", background: "var(--bg-dark)" }}>
 
-          {/* Canvas area */}
           <div className="sandbox__canvas-area">
             <SimCanvas
-              frames={frames}
-              obstacles={obstacles}
-              goal={goal}
-              goals={goals}
-              flags={flags}
-              start={start}
-              robotEmoji={robotEmoji}
-              isDark={isDark}
+              frames={frames} obstacles={obstacles}
+              goal={goal} goals={goals} flags={flags} start={start}
+              robotEmoji={robotEmoji} isDark={isDark}
             />
-
-            {/* Robot emoji picker */}
             <div className="sandbox__emoji-picker">
               <span className="sandbox__emoji-label">ROBOT</span>
               {ROBOT_EMOJIS.map(e => (
-                <button
-                  key={e}
-                  onClick={() => setRobotEmoji(e)}
-                  title={e}
-                  className={`sandbox__emoji-btn ${robotEmoji === e ? "sandbox__emoji-btn--active" : ""}`}
-                >
+                <button key={e} onClick={() => setRobotEmoji(e)} title={e}
+                  className={`sandbox__emoji-btn ${robotEmoji === e ? "sandbox__emoji-btn--active" : ""}`}>
                   {e}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* ── Inline result ── */}
+          {/* Inline result */}
           <div className={`sandbox__result ${score ? (passed ? "sandbox__result--pass" : "sandbox__result--fail") : ""}`}>
-
             {!score && !error && (
               <div className="sandbox__result-inner" style={{ fontSize: 12, color: "var(--text-dim)" }}>
                 Write code and click ▶ Run to test your solution.
               </div>
             )}
-
             {error && !score && (
               <div className="sandbox__result-inner">
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-red)", marginBottom: 4 }}>Error</div>
@@ -492,15 +640,11 @@ export default function Sandbox() {
                 <button onClick={handleRetry} className="btn btn--ghost btn--sm">Try again</button>
               </div>
             )}
-
             {score && (
               <div className="sandbox__result-inner">
-
-                {/* Score row */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                   <div className={`sandbox__score ${!passed ? "sandbox__score--fail" : ""}`}>
-                    {total}
-                    <span className="sandbox__score-max">/{pointsMax}</span>
+                    {total}<span className="sandbox__score-max">/{pointsMax}</span>
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: passed ? "var(--green-text)" : "var(--text-red)", marginBottom: 2 }}>
@@ -509,14 +653,12 @@ export default function Sandbox() {
                     <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{score.message}</div>
                   </div>
                 </div>
-
-                {/* Breakdown pills */}
                 {passed && score.breakdown && (
                   <div className="sandbox__breakdown">
                     {[
                       [`+${score.breakdown.completion}`, "completion"],
-                      [`+${score.breakdown.time_bonus}`,  "time bonus"],
-                      [`${score.time_taken}s`,             "your time"],
+                      [`+${score.breakdown.time_bonus}`, "time bonus"],
+                      [`${score.time_taken}s`, "your time"],
                       score.par_time && [`${score.par_time}s`, "par"],
                     ].filter(Boolean).map(([val, lbl]) => (
                       <span key={lbl} className="sandbox__pill">
@@ -525,8 +667,6 @@ export default function Sandbox() {
                     ))}
                   </div>
                 )}
-
-                {/* Code quality feedback */}
                 {score.code_feedback?.length > 0 && (
                   <div style={{ marginBottom: 8 }}>
                     {score.code_feedback.map((line, i) => (
@@ -536,8 +676,6 @@ export default function Sandbox() {
                     ))}
                   </div>
                 )}
-
-                {/* Unlock notification */}
                 {passed && nextChallenge && (
                   <div className="sandbox__unlock">
                     <span>🔓</span>
@@ -545,16 +683,11 @@ export default function Sandbox() {
                     <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{nextChallenge.title}</span>
                   </div>
                 )}
-
-                {/* Boss complete */}
                 {passed && isBoss && (
-                  <div className="sandbox__boss-complete" style={{ padding: "7px 10px", marginBottom: 8, borderRadius: 6, background: "var(--amber-bg)", border: "0.5px solid var(--border-amber)", fontSize: 11, color: "var(--amber-text)", fontWeight: 600 }}>
-                    🏆 Track {challenge.track} complete!
-                    {nextChallenge ? ` Track ${challenge.track + 1} unlocked.` : " More coming soon!"}
+                  <div style={{ padding: "7px 10px", marginBottom: 8, borderRadius: 6, background: "var(--amber-bg)", border: "0.5px solid var(--border-amber)", fontSize: 11, color: "var(--amber-text)", fontWeight: 600 }}>
+                    🏆 Track {challenge.track} complete!{nextChallenge ? ` Track ${challenge.track + 1} unlocked.` : " More coming soon!"}
                   </div>
                 )}
-
-                {/* Actions */}
                 <div className="sandbox__actions">
                   {passed && nextChallenge && (
                     <button onClick={handleGoNext} className="btn btn--green" style={{ flex: 1, padding: "9px", fontSize: 13, fontWeight: 700 }}>
@@ -568,20 +701,12 @@ export default function Sandbox() {
                     ☰
                   </button>
                 </div>
-
-                {/* Save bot */}
                 {user && passed && (
-                  <div className="sandbox__save-bot" style={{ marginTop: 8, display: "flex", gap: 6 }}>
-                    <input
-                      value={botName}
-                      onChange={e => setBotName(e.target.value)}
+                  <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+                    <input value={botName} onChange={e => setBotName(e.target.value)}
                       placeholder="Name this solution to save..."
-                      className="form-input"
-                      style={{ flex: 1, fontSize: 11 }}
-                    />
-                    <button onClick={handleSaveBot} disabled={!botName.trim()} className="btn btn--green btn--sm">
-                      Save
-                    </button>
+                      className="form-input" style={{ flex: 1, fontSize: 11 }} />
+                    <button onClick={handleSaveBot} disabled={!botName.trim()} className="btn btn--green btn--sm">Save</button>
                   </div>
                 )}
               </div>
