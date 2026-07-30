@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./theme/ThemeContext";
 import {
-  MapPin, Mail, Phone, Check, ArrowRight, Trophy, Globe, PartyPopper, Bot, ChevronRight,
+  MapPin, Mail, Phone, Check, ArrowRight, PartyPopper, Bot, ChevronRight, Sun, Moon,
 } from "lucide-react";
 import "./karoo-landing.css";
 
@@ -37,12 +37,20 @@ function MountainMark({ size = 28 }) {
 
 /* Cinematic hero backdrop — layered mountain silhouettes drifting
    at different parallax speeds behind a rising, glowing sun, with
-   a switchback trail climbing the tallest peak and a compact
-   silhouette scene (kid, RC car, waving robot) at the tree line. */
+   a switchback trail that draws itself climbing the tallest peak,
+   drifting clouds, slow-turning sun rays, and a compact rim-lit
+   silhouette scene (kid, RC car, waving robot) at the tree line.
+
+   Each mountain layer is three nested <g>s so the mount reveal,
+   the ambient drift and the JS scroll-parallax each own a single
+   transform and never fight over the same property:
+     .kc-mtn-parallax  ← ref target, JS sets style.transform only
+       .kc-mtn-reveal    CSS: slide + fade in once, on mount
+         .kc-mtn-drift    CSS: infinite slow horizontal sway */
 function HeroSky({ backRef, midRef, frontRef }) {
   return (
     <div className="kc-sky" aria-hidden="true">
-      <svg viewBox="0 0 1600 620" preserveAspectRatio="xMidYMax slice" role="img" aria-label="A sun rising behind layered mountain silhouettes, with a dashed switchback trail climbing the tallest peak">
+      <svg viewBox="0 0 1600 620" preserveAspectRatio="xMidYMax slice" role="img" aria-label="A sun rising behind layered mountain silhouettes, with a dashed switchback trail drawing itself up the tallest peak">
         <defs>
           <radialGradient id="kcSun" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#FFF3D6" />
@@ -57,33 +65,75 @@ function HeroSky({ backRef, midRef, frontRef }) {
           ))}
         </g>
 
+        <g transform="translate(300,150)"><g className="kc-cloud kc-cloud--a">
+          <ellipse cx="0" cy="0" rx="50" ry="17" fill="#2A2140" opacity="0.55" />
+          <ellipse cx="34" cy="-7" rx="32" ry="15" fill="#2A2140" opacity="0.55" />
+        </g></g>
+        <g transform="translate(1220,95)"><g className="kc-cloud kc-cloud--b">
+          <ellipse cx="0" cy="0" rx="40" ry="14" fill="#2A2140" opacity="0.45" />
+          <ellipse cx="26" cy="-6" rx="26" ry="12" fill="#2A2140" opacity="0.45" />
+        </g></g>
+
+        <g transform="translate(800,255)">
+          <g className="kc-sun-rays">
+            {[0, 45, 90, 135, 180, 225, 270, 315].map(a => (
+              <line key={a} x1="0" y1="-84" x2="0" y2="-100" transform={`rotate(${a})`} stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+            ))}
+          </g>
+        </g>
         <circle className="kc-sun" cx="800" cy="255" r="72" fill="url(#kcSun)" />
 
-        <g ref={backRef} className="kc-mtn-back">
-          <path d="M0 620 L0 440 L130 400 L270 450 L410 380 L570 430 L730 370 L890 420 L1050 360 L1210 410 L1370 370 L1600 420 L1600 620 Z" fill="#2A2140" />
-        </g>
-        <g ref={midRef} className="kc-mtn-mid">
-          <path d="M0 620 L0 480 L150 340 L290 420 L430 280 L580 400 L700 320 L840 270 L970 360 L1120 280 L1270 370 L1420 300 L1600 400 L1600 620 Z" fill="#211A32" />
-        </g>
-        <g ref={frontRef} className="kc-mtn-front">
-          <path d="M0 620 L0 520 L190 460 L330 500 L470 400 L630 480 L790 280 L950 440 L1110 360 L1270 460 L1430 400 L1600 480 L1600 620 Z" fill="#171225" />
-          <path d="M660 500 L700 450 L678 420 L714 380 L790 282" fill="none" stroke="var(--ember)" strokeWidth="2.5" strokeDasharray="3 7" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
-
-          {/* compact silhouette scene at the tree line */}
-          <g transform="translate(240,545)" fill="#0E0A17">
-            <circle cx="16" cy="-24" r="10" />
-            <rect x="9" y="-14" width="14" height="20" rx="4" />
-            <rect x="-2" y="0" width="90" height="24" rx="10" />
-            <circle cx="14" cy="26" r="9" />
-            <circle cx="76" cy="26" r="9" />
-            <circle cx="14" cy="26" r="2.4" fill="var(--ember)" />
-            <circle cx="76" cy="26" r="2.4" fill="var(--ember)" />
+        <g ref={backRef}>
+          <g className="kc-mtn-reveal kc-mtn-reveal--back">
+            <g className="kc-mtn-drift kc-mtn-drift--back">
+              <path d="M0 620 L0 440 L130 400 L270 450 L410 380 L570 430 L730 370 L890 420 L1050 360 L1210 410 L1370 370 L1600 420 L1600 620 Z" fill="#2A2140" />
+            </g>
           </g>
-          <g transform="translate(400,530)" fill="#0E0A17">
-            <rect x="0" y="0" width="30" height="26" rx="8" />
-            <rect x="4" y="26" width="34" height="32" rx="9" />
-            <circle cx="19" cy="-6" r="2.2" fill="var(--teal)" />
-            <circle cx="21" cy="42" r="2.4" fill="var(--gold)" />
+        </g>
+        <g ref={midRef}>
+          <g className="kc-mtn-reveal kc-mtn-reveal--mid">
+            <g className="kc-mtn-drift kc-mtn-drift--mid">
+              <path d="M0 620 L0 480 L150 340 L290 420 L430 280 L580 400 L700 320 L840 270 L970 360 L1120 280 L1270 370 L1420 300 L1600 400 L1600 620 Z" fill="#211A32" />
+            </g>
+          </g>
+        </g>
+        <g ref={frontRef}>
+          <g className="kc-mtn-reveal kc-mtn-reveal--front">
+            <g className="kc-mtn-drift kc-mtn-drift--front">
+              <path d="M0 620 L0 520 L190 460 L330 500 L470 400 L630 480 L790 280 L950 440 L1110 360 L1270 460 L1430 400 L1600 480 L1600 620 Z" fill="#171225" />
+              <path
+                className="kc-switchback-path"
+                pathLength="100"
+                d="M660 500 L700 450 L678 420 L714 380 L790 282"
+                fill="none" stroke="var(--ember)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              />
+
+              {/* compact rim-lit silhouette scene at the tree line —
+                  kid with a remote, RC car, a hint of sunrise on
+                  every edge that faces the light */}
+              <g transform="translate(240,545)">
+                <g fill="#0E0A17">
+                  <circle cx="16" cy="-24" r="10" />
+                  <rect x="9" y="-14" width="14" height="20" rx="4" />
+                  <rect x="-2" y="0" width="90" height="24" rx="10" />
+                  <circle cx="14" cy="26" r="9" />
+                  <circle cx="76" cy="26" r="9" />
+                </g>
+                <path className="kc-rimlight" d="M8 -32 a10 10 0 0 1 15 5" />
+                <path className="kc-rimlight" d="M-1 3 a11 11 0 0 1 15 -2" />
+                <circle cx="14" cy="26" r="2.4" fill="var(--ember)" />
+                <circle cx="76" cy="26" r="2.4" fill="var(--ember)" />
+              </g>
+              <g transform="translate(400,530)">
+                <g fill="#0E0A17">
+                  <rect x="0" y="0" width="30" height="26" rx="8" />
+                  <rect x="4" y="26" width="34" height="32" rx="9" />
+                </g>
+                <path className="kc-rimlight" d="M1 1 a9 9 0 0 1 21 4" />
+                <circle cx="19" cy="-6" r="2.2" fill="var(--teal)" />
+                <circle cx="21" cy="42" r="2.4" fill="var(--gold)" />
+              </g>
+            </g>
           </g>
         </g>
       </svg>
@@ -157,6 +207,41 @@ function RocketIcon({ size = 32 }) {
         <circle cx="16" cy="14" r="3" />
         <path d="M12 24 L5 32 L12 30" /><path d="M20 24 L27 32 L20 30" />
         <path d="M13 28 L13 34 M16 28 L16 36 M19 28 L19 34" stroke="var(--ember)" />
+      </g>
+    </svg>
+  );
+}
+function FlagIcon({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" className="kc-doodle" aria-hidden="true">
+      <g stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="7" y1="4" x2="7" y2="24" fill="none" />
+        <path d="M7 5 L21 8 L15 12 L21 16 L7 18 Z" fill="currentColor" fillOpacity="0.16" />
+      </g>
+    </svg>
+  );
+}
+function TrophyIcon({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" className="kc-doodle" aria-hidden="true">
+      <g stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 5 h10 v6 a5 5 0 0 1 -10 0 Z" />
+        <path d="M9 7 h-4 a3 3 0 0 0 3.5 5" />
+        <path d="M19 7 h4 a3 3 0 0 1 -3.5 5" />
+        <line x1="14" y1="16" x2="14" y2="20" />
+        <path d="M9 24 h10 l-1.5 -4 h-7 Z" />
+      </g>
+    </svg>
+  );
+}
+function GlobeIcon({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" className="kc-doodle" aria-hidden="true">
+      <g stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="14" cy="14" r="10" />
+        <ellipse cx="14" cy="14" rx="4.2" ry="10" />
+        <line x1="4" y1="14" x2="24" y2="14" />
+        <path d="M6 8.5 h16" /><path d="M6 19.5 h16" />
       </g>
     </svg>
   );
@@ -310,8 +395,9 @@ function ThemeSwitch() {
   const isDark = theme === "dark";
   return (
     <button className="kc-switch" onClick={toggleTheme} aria-pressed={isDark} aria-label={isDark ? "Switch to day mode" : "Switch to night mode"}>
-      <span className="kc-switch__track"><span className="kc-switch__thumb" /></span>
-      {isDark ? "NIGHT" : "DAY"}
+      <span className="kc-switch__thumb">
+        {isDark ? <Moon /> : <Sun />}
+      </span>
     </button>
   );
 }
@@ -329,11 +415,11 @@ const NAV_LINKS = [
 ];
 
 const SKILLS = [
-  { Icon: SensorIcon, color: "var(--teal-deep)", title: "Sensors", desc: "Ultrasonic and IR sensors that let a robot sense the world around it." },
-  { Icon: GearIcon, color: "var(--ember-deep)", title: "Actuators", desc: "Motors and servos that turn a decision into motion." },
-  { Icon: ChipIcon, color: "var(--violet-deep)", title: "Microcontrollers", desc: "Arduino boards — the bridge between code and hardware." },
-  { Icon: CircuitIcon, color: "var(--gold-deep)", title: "Circuits", desc: "Breadboards, resistors, wiring — built and debugged by hand." },
-  { Icon: CodeIcon, color: "var(--teal-deep)", title: "Programming", desc: "C/C++ fundamentals, picked up because the robot needed them." },
+  { Icon: SensorIcon, color: "var(--teal-icon)", title: "Sensors", desc: "Ultrasonic and IR sensors that let a robot sense the world around it." },
+  { Icon: GearIcon, color: "var(--ember-icon)", title: "Actuators", desc: "Motors and servos that turn a decision into motion." },
+  { Icon: ChipIcon, color: "var(--violet-icon)", title: "Microcontrollers", desc: "Arduino boards — the bridge between code and hardware." },
+  { Icon: CircuitIcon, color: "var(--gold-icon)", title: "Circuits", desc: "Breadboards, resistors, wiring — built and debugged by hand." },
+  { Icon: CodeIcon, color: "var(--teal-icon)", title: "Programming", desc: "C/C++ fundamentals, picked up because the robot needed them." },
 ];
 
 const DAYS = [
@@ -349,10 +435,23 @@ const DAYS = [
   { title: "Demo day", desc: "Present the robot you built. Take it home.", summit: true },
 ];
 
-const PROGRAMS = [
-  { icon: "rocket", title: "Robotics club", desc: "Weekly after-school sessions for students who want to keep building." },
-  { icon: Trophy, title: "Student hackathons", desc: "City-level build competitions for student teams to test what they've learned." },
-  { icon: Globe, title: "Maker community", desc: "Student builders across Nagpur, sharing projects and helping each other." },
+const ROADMAP = [
+  {
+    Icon: FlagIcon, color: "var(--ember)", live: true,
+    title: "Foundation Workshop", desc: "7–10 days, on-site at your school. Every student builds and takes home a working robot.",
+  },
+  {
+    Icon: RocketIcon, color: "var(--teal-icon)", live: false,
+    title: "Robotics Club", desc: "Weekly after-school sessions for students who want to keep building.",
+  },
+  {
+    Icon: TrophyIcon, color: "var(--gold-icon)", live: false,
+    title: "Student Hackathons", desc: "City-level build competitions for student teams to test what they've learned.",
+  },
+  {
+    Icon: GlobeIcon, color: "var(--violet-icon)", live: false,
+    title: "Innovation Labs", desc: "Deeper robotics tracks and in-school labs for students who want to go further.",
+  },
 ];
 
 const SCHOOL_POINTS = [
@@ -375,7 +474,7 @@ export default function KarooLandingPage({ onExploreCourses }) {
   const [morphRef, morphed] = useReveal(0.5);
   const [skillsRef, skillsVisible] = useReveal();
   const [filmRef, filmVisible] = useReveal(0.1);
-  const [programsRef, programsVisible] = useReveal();
+  const [roadmapRef, roadmapVisible] = useReveal(0.15);
 
   const progress = useScrollProgress();
   const scrolled = useScrolled();
@@ -549,24 +648,33 @@ export default function KarooLandingPage({ onExploreCourses }) {
         </div>
       </section>
 
-      {/* ── BEYOND THE WORKSHOP ── */}
-      <section id="programs" className="kc-section" ref={programsRef}>
+      {/* ── ROADMAP — the road beyond the workshop ── */}
+      <section id="programs" className="kc-section">
         <div className="kc-container">
-          <Eyebrow>Beyond the workshop</Eyebrow>
+          <Eyebrow>Your learning roadmap</Eyebrow>
           <h2 className="kc-h2">We don't disappear after Day 10.</h2>
-          <div className={`kc-grid ${programsVisible ? "is-visible" : ""}`} style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-            {PROGRAMS.map((p, i) => (
-              <div className="kc-card kc-reveal" key={p.title} style={{ "--i": i }}>
-                {p.icon === "rocket" ? (
-                  <span style={{ color: "var(--ember-deep)", display: "inline-block" }}><RocketIcon size={32} /></span>
-                ) : (
-                  <p.icon size={28} strokeWidth={1.5} color="var(--teal-deep)" />
-                )}
-                <div className="kc-card__title">{p.title}</div>
-                <div className="kc-card__desc">{p.desc}</div>
-                <span className="kc-pill" style={{ marginTop: "0.75rem", width: "fit-content" }}>Coming soon</span>
-              </div>
-            ))}
+          <p className="kc-p kc-p--lead">
+            The workshop is stage one, not the whole story. Here's where a
+            student can go next.
+          </p>
+          <div ref={roadmapRef} className={`kc-roadmap ${roadmapVisible ? "is-visible" : ""}`}>
+            <svg className="kc-roadmap-line" viewBox="0 0 800 60" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M40 40 Q 220 55 260 25 Q 400 -10 540 20 Q 640 40 760 8" />
+              <path className="kc-roadmap-line__fill" pathLength="100" d="M40 40 Q 220 55 260 25 Q 400 -10 540 20 Q 640 40 760 8" />
+            </svg>
+            <div className="kc-roadmap-stages">
+              {ROADMAP.map((s, i) => (
+                <div className={`kc-roadmap-stage kc-reveal ${s.live ? "kc-roadmap-stage--live" : ""}`} key={s.title} style={{ "--i": i }}>
+                  <div className="kc-roadmap-stage__step">Stage {i + 1}</div>
+                  <div className="kc-roadmap-stage__badge" style={{ "--icon-color": s.color }}><s.Icon size={22} /></div>
+                  <div className="kc-card__title">{s.title}</div>
+                  <div className="kc-card__desc">{s.desc}</div>
+                  <span className={`kc-pill ${s.live ? "kc-pill--live" : ""}`} style={{ marginTop: "0.75rem", width: "fit-content" }}>
+                    {s.live ? "Live now" : "Coming soon"}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -589,7 +697,7 @@ export default function KarooLandingPage({ onExploreCourses }) {
               <div style={{ marginTop: "1.75rem", display: "flex", flexDirection: "column", gap: "0.625rem" }}>
                 {CONTACT.map(c => (
                   <div key={c.value} style={{ display: "flex", alignItems: "center", gap: "0.625rem", fontSize: "0.8125rem", color: "var(--ink-muted)" }}>
-                    <c.icon size={15} color="var(--ember-deep)" /> {c.value}
+                    <c.icon size={15} color="var(--ember-icon)" /> {c.value}
                   </div>
                 ))}
               </div>

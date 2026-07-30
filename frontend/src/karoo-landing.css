@@ -33,6 +33,19 @@
   --border-strong: rgba(26, 21, 36, 0.20);
   --shadow-sm: 0 2px 12px rgba(26, 21, 36, 0.06);
   --shadow-md: 0 18px 40px rgba(26, 21, 36, 0.12);
+  --card-bg: var(--paper);
+  --card-border: var(--border);
+  --card-blur: none;
+
+  /* icon-glyph colors: badges tint their background from the icon
+     color at low opacity over --card-bg, so in light mode (badge
+     bg stays near-paper) the glyph needs the dark "-deep" shade,
+     while in dark mode (badge bg stays near-black) it needs the
+     bright base shade instead — same color family, opposite pick */
+  --teal-icon:   var(--teal-deep);
+  --ember-icon:  var(--ember-deep);
+  --gold-icon:   var(--gold-deep);
+  --violet-icon: var(--violet-deep);
 
   /* fixed regardless of theme — the hero/footer are a permanent
      night scene, the way a photo of a sunrise doesn't change
@@ -47,20 +60,34 @@
 }
 
 html[data-theme="dark"] .kc {
-  --paper:     #15111F;
-  --paper-alt: #1F1930;
+  /* darker and more separated than the old pass, and deliberately
+     distinct from --night (the fixed hero/footer scene) so toggling
+     reads as a real change, not "more of the hero everywhere" */
+  --paper:     #0D0A15;
+  --paper-alt: #171122;
   --ink:       #F7F1E6;
-  --ink-muted: rgba(247, 241, 230, 0.64);
+  --ink-muted: rgba(247, 241, 230, 0.66);
 
   --ember: #FF8259;
   --gold:  #FFD166;
   --teal:  #2DD4BF;
   --violet: #9B82FF;
 
-  --border:        rgba(247, 241, 230, 0.12);
-  --border-strong: rgba(247, 241, 230, 0.22);
-  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 18px 40px rgba(0, 0, 0, 0.45);
+  --border:        rgba(247, 241, 230, 0.14);
+  --border-strong: rgba(247, 241, 230, 0.26);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 20px 44px rgba(0, 0, 0, 0.5);
+
+  --teal-icon:   var(--teal);
+  --ember-icon:  var(--ember);
+  --gold-icon:   var(--gold);
+  --violet-icon: var(--violet);
+
+  /* glassy card surface — a genuinely different card style from
+     light mode's flat soft-shadow paper, not just inverted colors */
+  --card-bg: rgba(247, 241, 230, 0.045);
+  --card-border: rgba(247, 241, 230, 0.12);
+  --card-blur: blur(14px);
 }
 
 .kc, .kc *, .kc *::before, .kc *::after { box-sizing: border-box; }
@@ -157,8 +184,15 @@ html[data-theme="dark"] .kc-h2 em { color: var(--ember); }
 }
 
 .kc-nav {
-  position: sticky;
+  /* fixed, not sticky: sticky still reserves its natural layout
+     space at the top of the page, which pushed the hero down and
+     let the transparent nav reveal the PAGE background instead of
+     the hero's — invisible in dark mode by coincidence (both
+     backgrounds were dark), but broke in light mode */
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   display: flex;
   align-items: center;
@@ -204,35 +238,38 @@ html[data-theme="dark"] .kc-h2 em { color: var(--ember); }
 .kc-nav__right { display: flex; align-items: center; gap: 1rem; }
 
 .kc-switch {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.6875rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: inherit;
-  opacity: 0.75;
+  width: 58px;
+  height: 32px;
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--gold) 22%, var(--paper-alt));
+  border: 1px solid var(--border-strong);
   cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0;
-}
-.kc-switch__track {
-  position: relative;
-  width: 38px; height: 21px;
-  border-radius: 11px;
-  background: rgba(127, 127, 127, 0.3);
+  padding: 4px;
   flex-shrink: 0;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
+.kc-nav:not(.kc-nav--scrolled) .kc-switch {
+  background: rgba(247, 241, 230, 0.1);
+  border-color: rgba(247, 241, 230, 0.3);
+}
+html[data-theme="dark"] .kc-switch { background: color-mix(in srgb, var(--violet) 26%, var(--paper-alt)); }
 .kc-switch__thumb {
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 15px; height: 15px;
+  position: relative;
+  width: 24px; height: 24px;
   border-radius: 50%;
   background: var(--gold);
-  transition: transform 0.2s ease;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(0);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, color 0.3s ease;
 }
-.kc-switch[aria-pressed="true"] .kc-switch__thumb { transform: translateX(17px); background: var(--teal); }
+.kc-switch__thumb svg { width: 14px; height: 14px; }
+.kc-switch[aria-pressed="true"] .kc-switch__thumb { transform: translateX(26px); background: var(--night-alt); color: var(--violet); }
 
 /* ── 4. Buttons — soft premium, magnetic-ready ────────────────── */
 .kc-btn {
@@ -305,18 +342,47 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
 .kc-stars circle { animation: kcTwinkle 3.6s ease-in-out infinite; }
 @keyframes kcTwinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.85; } }
 
+/* Each mountain layer is three nested <g>s, one transform apiece,
+   so the mount reveal, the ambient drift and the JS scroll-parallax
+   never fight over the same `transform` property:
+     .kc-mtn-parallax  (ref target — JS sets style.transform only)
+       .kc-mtn-reveal   (CSS: slide+fade in once, on mount)
+         .kc-mtn-drift  (CSS: infinite slow horizontal sway) */
 @media (prefers-reduced-motion: no-preference) {
   .kc-sun { animation: kcSunrise 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both, kcSunGlow 4s ease-in-out 2.4s infinite; transform-origin: center; }
-  .kc-mtn-back  { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .kc-mtn-mid   { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both; }
-  .kc-mtn-front { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both; }
+  .kc-sun-rays { animation: kcRaysRotate 46s linear infinite; }
+  .kc-cloud--a { animation: kcCloudDrift 46s ease-in-out infinite; }
+  .kc-cloud--b { animation: kcCloudDrift 58s ease-in-out infinite reverse; }
+  .kc-mtn-reveal--back  { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .kc-mtn-reveal--mid   { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both; }
+  .kc-mtn-reveal--front { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both; }
+  .kc-mtn-drift--back  { animation: kcMtnDrift 38s ease-in-out infinite; }
+  .kc-mtn-drift--mid   { animation: kcMtnDrift 28s ease-in-out infinite reverse; }
+  .kc-mtn-drift--front { animation: kcMtnDrift 22s ease-in-out infinite; }
+  .kc-switchback-path { animation: kcDrawPath 1.8s cubic-bezier(0.65, 0, 0.35, 1) 1.3s forwards; }
 }
 @keyframes kcSunrise { from { transform: translateY(90px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes kcSunGlow {
   0%, 100% { filter: drop-shadow(0 0 18px rgba(255, 193, 69, 0.55)); }
   50%      { filter: drop-shadow(0 0 34px rgba(255, 193, 69, 0.8)); }
 }
+@keyframes kcRaysRotate { to { transform: rotate(360deg); } }
+@keyframes kcCloudDrift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(46px); } }
 @keyframes kcLayerIn { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes kcMtnDrift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(10px); } }
+
+.kc-switchback-path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kc-switchback-path { stroke-dashoffset: 0; }
+}
+@keyframes kcDrawPath { to { stroke-dashoffset: 0; } }
+
+/* rim-light on the hero silhouette scene — a thin gold stroke on
+   the side facing the sun, as if lit by it */
+.kc-rimlight { fill: none; stroke: var(--gold); stroke-width: 1.2; stroke-linecap: round; opacity: 0.75; }
 
 .kc-hero > *:not(.kc-sky) { position: relative; z-index: 1; }
 
@@ -407,14 +473,20 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
 
 /* ── 7. Cards ──────────────────────────────────────────────────── */
 .kc-card {
-  background: var(--paper);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  border: 1px solid var(--card-border);
   border-radius: 20px;
   padding: 1.875rem;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
 }
 .kc-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+html[data-theme="dark"] .kc-card:hover {
+  border-color: color-mix(in srgb, var(--icon-color, var(--ember)) 45%, var(--card-border));
+  box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--icon-color, var(--ember)) 25%, transparent) inset;
+}
 
 .kc-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.25rem; margin-top: 3rem; }
 .kc-grid .kc-card { display: flex; flex-direction: column; gap: 0.75rem; }
@@ -435,9 +507,11 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
   position: relative;
   aspect-ratio: 4 / 3.4;
   border-radius: 24px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--card-border);
   overflow: hidden;
-  background: var(--paper-alt);
+  background: color-mix(in srgb, var(--card-bg) 60%, var(--paper-alt));
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
 }
 .kc-morph__layer {
   position: absolute; inset: 0;
@@ -488,8 +562,10 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
 .kc-day-card {
   scroll-snap-align: start;
   flex: 0 0 240px;
-  background: var(--paper);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  border: 1px solid var(--card-border);
   border-radius: 20px;
   padding: 1.625rem;
   position: relative;
@@ -522,9 +598,11 @@ html[data-theme="dark"] .kc-day-card__num { color: var(--ember); }
 }
 @keyframes kcNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
 
-/* ── 10. Programs ─────────────────────────────────────────────── */
+/* ── 10. Roadmap — the road beyond the workshop ───────────────── */
 .kc-pill {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -534,6 +612,62 @@ html[data-theme="dark"] .kc-day-card__num { color: var(--ember); }
   color: var(--violet-deep);
 }
 html[data-theme="dark"] .kc-pill { color: var(--violet); }
+.kc-pill--live { background: color-mix(in srgb, var(--teal) 18%, var(--paper)); color: var(--teal-deep); }
+html[data-theme="dark"] .kc-pill--live { color: var(--teal); }
+.kc-pill--live::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kc-pill--live::before { animation: kcPulse 2s ease-in-out infinite; }
+}
+
+.kc-roadmap { position: relative; margin-top: 4rem; }
+.kc-roadmap-line {
+  position: absolute;
+  left: 0; right: 0; top: 26px;
+  height: 60px;
+  overflow: visible;
+  pointer-events: none;
+}
+.kc-roadmap-line path {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 2;
+  stroke-dasharray: 7 7;
+}
+.kc-roadmap-line path.kc-roadmap-line__fill {
+  stroke: var(--ember-deep);
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 1.6s cubic-bezier(0.65, 0, 0.35, 1);
+}
+html[data-theme="dark"] .kc-roadmap-line path.kc-roadmap-line__fill { stroke: var(--ember); }
+.is-visible .kc-roadmap-line path.kc-roadmap-line__fill { stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .kc-roadmap-line path.kc-roadmap-line__fill { stroke-dashoffset: 0; transition: none; }
+}
+
+.kc-roadmap-stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; position: relative; z-index: 1; }
+.kc-roadmap-stage { text-align: left; }
+.kc-roadmap-stage__badge {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--icon-color, var(--ember)) 16%, var(--card-bg));
+  color: var(--icon-color, var(--ember));
+  border: 1px solid var(--card-border);
+  margin-bottom: 1.125rem;
+}
+.kc-roadmap-stage--live .kc-roadmap-stage__badge {
+  background: var(--ember);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 10px 24px rgba(255, 107, 53, 0.32);
+}
+.kc-roadmap-stage__step { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.08em; color: var(--ink-muted); margin-bottom: 0.375rem; text-transform: uppercase; }
 
 /* ── 11. For Schools + confetti form ──────────────────────────── */
 .kc-schools-info { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
@@ -543,8 +677,10 @@ html[data-theme="dark"] .kc-schools-info svg { color: var(--ember); }
 
 .kc-form-card {
   position: relative;
-  background: var(--paper-alt);
-  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card-bg) 60%, var(--paper-alt));
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  border: 1px solid var(--card-border);
   border-radius: 24px;
   padding: 2.25rem;
   overflow: hidden;
@@ -621,6 +757,8 @@ html[data-theme="dark"] .kc-form__success svg { color: var(--ember); }
   .kc-split { grid-template-columns: 1fr; gap: 2.75rem; }
   .kc-grid { grid-template-columns: repeat(2, 1fr); }
   .kc-section { padding: 5rem 0; }
+  .kc-roadmap-stages { grid-template-columns: repeat(2, 1fr); row-gap: 2.5rem; }
+  .kc-roadmap-line { display: none; }
 }
 
 @media (max-width: 639px) {
@@ -632,4 +770,5 @@ html[data-theme="dark"] .kc-form__success svg { color: var(--ember); }
   .kc-footer__top { flex-direction: column; gap: 1.75rem; }
   .kc-footer__bottom { flex-direction: column; align-items: flex-start; }
   .kc-day-card { flex-basis: 220px; }
+  .kc-roadmap-stages { grid-template-columns: 1fr; }
 }
