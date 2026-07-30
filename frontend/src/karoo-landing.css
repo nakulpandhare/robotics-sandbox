@@ -1,0 +1,635 @@
+/* ============================================================
+   KAROO LANDING — "The Climb"
+   Namespaced under .kc so nothing here touches the shared
+   karoo.css used by the Sandbox / Challenge pages.
+
+   The signature idea: Karoo's own emblem — mountain, switchback
+   path, rising sun — becomes the page's one real spectacle. The
+   hero is a live sunrise-over-mountains scene with parallax and
+   kinetic type; further down, the "Day 1 → Day 10" journey is a
+   horizontal drag-scroll filmstrip instead of another card grid.
+   Everything else stays disciplined so that moment can land.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── 1. Color system ─────────────────────────────────────────── */
+.kc {
+  --paper:     #FBF7F2;
+  --paper-alt: #F1E9DE;
+  --ink:       #1A1524;
+  --ink-muted: rgba(26, 21, 36, 0.64);
+
+  --ember:      #FF6B35;
+  --ember-deep: #B8431A;
+  --gold:       #FFC145;
+  --gold-deep:  #8A5E00;
+  --teal:       #12B8A6;
+  --teal-deep:  #0B6E67;
+  --violet:     #7C5CFC;
+  --violet-deep: #4A35B0;
+
+  --border:        rgba(26, 21, 36, 0.10);
+  --border-strong: rgba(26, 21, 36, 0.20);
+  --shadow-sm: 0 2px 12px rgba(26, 21, 36, 0.06);
+  --shadow-md: 0 18px 40px rgba(26, 21, 36, 0.12);
+
+  /* fixed regardless of theme — the hero/footer are a permanent
+     night scene, the way a photo of a sunrise doesn't change
+     depending on what time you look at it */
+  --night:      #15111F;
+  --night-alt:  #1F1930;
+  --cream-text: #F7F1E6;
+
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+html[data-theme="dark"] .kc {
+  --paper:     #15111F;
+  --paper-alt: #1F1930;
+  --ink:       #F7F1E6;
+  --ink-muted: rgba(247, 241, 230, 0.64);
+
+  --ember: #FF8259;
+  --gold:  #FFD166;
+  --teal:  #2DD4BF;
+  --violet: #9B82FF;
+
+  --border:        rgba(247, 241, 230, 0.12);
+  --border-strong: rgba(247, 241, 230, 0.22);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.kc, .kc *, .kc *::before, .kc *::after { box-sizing: border-box; }
+.kc a { color: inherit; }
+.kc ::selection { background: var(--ember); color: #fff; }
+.kc button, .kc input, .kc textarea { font-family: inherit; }
+.kc :focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
+
+/* ── 2. Layout + type ─────────────────────────────────────────── */
+.kc-container { max-width: 1180px; margin: 0 auto; padding: 0 2rem; }
+.kc-section { padding: 7rem 0; position: relative; overflow: hidden; background: var(--paper); }
+.kc-section--alt { background: var(--paper-alt); }
+
+.kc-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ember-deep);
+  margin-bottom: 1.125rem;
+}
+html[data-theme="dark"] .kc-eyebrow { color: var(--ember); }
+.kc-eyebrow--onNight { color: var(--gold); }
+
+.kc-h1 {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.5rem, 6vw, 4.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--cream-text);
+}
+
+.kc-h2 {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 600;
+  font-size: clamp(1.75rem, 3.2vw, 2.625rem);
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  margin-bottom: 1.25rem;
+  color: var(--ink);
+}
+.kc-h2 em { color: var(--ember-deep); font-style: normal; }
+html[data-theme="dark"] .kc-h2 em { color: var(--ember); }
+
+.kc-p {
+  font-size: 1.0625rem;
+  color: var(--ink-muted);
+  line-height: 1.72;
+  max-width: 60ch;
+}
+.kc-p + .kc-p { margin-top: 1rem; }
+.kc-p--center { max-width: 58ch; margin-left: auto; margin-right: auto; }
+.kc-p--lead { font-size: 1.1875rem; max-width: 54ch; margin-left: auto; margin-right: auto; }
+.kc-p--onNight { color: rgba(247, 241, 230, 0.72); }
+
+/* ── word-mask kinetic text (hero headline) ───────────────────── */
+.kc-word-mask { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.08em; }
+.kc-word-inner { display: inline-block; }
+@media (prefers-reduced-motion: no-preference) {
+  .kc-word-inner {
+    transform: translateY(115%);
+    animation: kcWordUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+@keyframes kcWordUp { to { transform: translateY(0); } }
+
+/* ── clip-reveal cards (replaces plain fade-up) ───────────────── */
+.kc-reveal {
+  clip-path: inset(0 0 100% 0);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: clip-path 0.75s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease, transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+.is-visible .kc-reveal { clip-path: inset(0 0 0% 0); opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kc-reveal { clip-path: none; opacity: 1; transform: none; transition: none; }
+  .kc-word-inner { transform: none; }
+}
+
+/* ── 3. Scroll-progress bar + nav ─────────────────────────────── */
+.kc-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: var(--ember);
+  z-index: 60;
+  transition: width 0.05s linear;
+}
+
+.kc-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.125rem 2rem;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, padding 0.25s ease;
+  color: var(--cream-text);
+}
+.kc-nav--scrolled {
+  padding: 0.875rem 2rem;
+  background: var(--paper);
+  border-bottom-color: var(--border);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+}
+
+.kc-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.kc-navlinks {
+  display: flex;
+  gap: 1.75rem;
+  list-style: none;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: rgba(247, 241, 230, 0.68);
+}
+.kc-nav--scrolled .kc-navlinks { color: var(--ink-muted); }
+.kc-navlinks li { cursor: pointer; transition: color 0.15s ease; }
+.kc-navlinks li:hover { color: inherit; opacity: 1; }
+
+.kc-nav__right { display: flex; align-items: center; gap: 1rem; }
+
+.kc-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: inherit;
+  opacity: 0.75;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.kc-switch__track {
+  position: relative;
+  width: 38px; height: 21px;
+  border-radius: 11px;
+  background: rgba(127, 127, 127, 0.3);
+  flex-shrink: 0;
+}
+.kc-switch__thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--gold);
+  transition: transform 0.2s ease;
+}
+.kc-switch[aria-pressed="true"] .kc-switch__thumb { transform: translateX(17px); background: var(--teal); }
+
+/* ── 4. Buttons — soft premium, magnetic-ready ────────────────── */
+.kc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 1rem 1.875rem;
+  border-radius: 100px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+.kc-btn:active { transform: scale(0.96) !important; }
+.kc-btn svg { flex-shrink: 0; }
+.kc-btn--sm { padding: 0.625rem 1.25rem; font-size: 0.75rem; }
+.kc-btn--lg { padding: 1.125rem 2.25rem; font-size: 0.9375rem; }
+
+.kc-btn--ember {
+  background: var(--ember);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(255, 107, 53, 0.32);
+}
+.kc-btn--ember:hover { box-shadow: 0 14px 34px rgba(255, 107, 53, 0.42); }
+
+.kc-btn--outline-onNight {
+  background: rgba(247, 241, 230, 0.06);
+  border-color: rgba(247, 241, 230, 0.35);
+  color: var(--cream-text);
+}
+.kc-btn--outline-onNight:hover { background: rgba(247, 241, 230, 0.14); border-color: rgba(247, 241, 230, 0.6); }
+
+.kc-btn--teal { background: var(--teal-deep); color: #fff; box-shadow: 0 10px 28px rgba(11, 110, 103, 0.3); }
+html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--night); box-shadow: 0 10px 28px rgba(45, 212, 191, 0.3); }
+.kc-btn--teal:hover { filter: brightness(1.08); }
+
+.kc-btn--text {
+  background: transparent;
+  border: none;
+  color: rgba(247, 241, 230, 0.66);
+  padding: 0.4375rem 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(247, 241, 230, 0.3);
+  text-underline-offset: 4px;
+  border-radius: 0;
+}
+.kc-btn--text:hover { color: var(--cream-text); }
+
+/* ── 5. Hero — cinematic sunrise-over-mountains ───────────────── */
+.kc-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 7rem 2rem 3rem;
+  background: var(--night);
+  color: var(--cream-text);
+  overflow: hidden;
+}
+
+.kc-sky { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.kc-sky svg { position: absolute; bottom: 0; left: 50%; width: max(1400px, 160vw); height: auto; transform: translateX(-50%); }
+
+.kc-stars circle { animation: kcTwinkle 3.6s ease-in-out infinite; }
+@keyframes kcTwinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.85; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .kc-sun { animation: kcSunrise 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both, kcSunGlow 4s ease-in-out 2.4s infinite; transform-origin: center; }
+  .kc-mtn-back  { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .kc-mtn-mid   { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both; }
+  .kc-mtn-front { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both; }
+}
+@keyframes kcSunrise { from { transform: translateY(90px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes kcSunGlow {
+  0%, 100% { filter: drop-shadow(0 0 18px rgba(255, 193, 69, 0.55)); }
+  50%      { filter: drop-shadow(0 0 34px rgba(255, 193, 69, 0.8)); }
+}
+@keyframes kcLayerIn { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.kc-hero > *:not(.kc-sky) { position: relative; z-index: 1; }
+
+.kc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.5rem 1.125rem;
+  border-radius: 100px;
+  background: rgba(247, 241, 230, 0.08);
+  border: 1px solid rgba(247, 241, 230, 0.18);
+  margin-bottom: 1.75rem;
+}
+
+.kc-sub {
+  font-size: 1.1875rem;
+  color: rgba(247, 241, 230, 0.76);
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 1.5rem auto 2.5rem;
+}
+
+.kc-hero__buttons { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.25rem; flex-wrap: wrap; }
+
+.kc-hero__sandbox-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(247, 241, 230, 0.6);
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  text-decoration: underline;
+  text-decoration-color: rgba(247, 241, 230, 0.3);
+  text-underline-offset: 4px;
+}
+.kc-hero__sandbox-link:hover { color: var(--cream-text); }
+
+.kc-scroll-cue {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(247, 241, 230, 0.55);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kc-scroll-cue__line { animation: kcScrollCue 1.8s ease-in-out infinite; }
+}
+@keyframes kcScrollCue { 0%, 100% { transform: scaleY(1); opacity: 0.4; } 50% { transform: scaleY(1.6); opacity: 1; } }
+.kc-scroll-cue__line { width: 1px; height: 22px; background: currentColor; transform-origin: top; }
+
+/* angled divider where the hero meets the page */
+.kc-hero-divider {
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 64px;
+  background: var(--paper);
+  clip-path: polygon(0 100%, 100% 0, 100% 100%);
+  z-index: 2;
+}
+
+/* ── 6. Doodle system (kept, recolored) ───────────────────────── */
+.kc-doodle { overflow: visible; display: block; }
+.kc-doodle-stroke { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.kc-ambient { position: absolute; pointer-events: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .kc-bob-a { animation: kcBob 5s ease-in-out infinite; transform-origin: center; }
+  .kc-bob-b { animation: kcBob 6.5s ease-in-out infinite 0.6s; transform-origin: center; }
+  .kc-bob-c { animation: kcBob 4.5s ease-in-out infinite 1.1s; transform-origin: center; }
+  .kc-pulse { animation: kcPulse 2.6s ease-in-out infinite; transform-origin: center; }
+}
+@keyframes kcBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes kcPulse { 0%, 100% { opacity: 0.5; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.08); } }
+
+/* ── 7. Cards ──────────────────────────────────────────────────── */
+.kc-card {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.875rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.kc-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+
+.kc-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.25rem; margin-top: 3rem; }
+.kc-grid .kc-card { display: flex; flex-direction: column; gap: 0.75rem; }
+.kc-card__icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--icon-color, var(--ember)) 15%, var(--paper));
+  color: var(--icon-color, var(--ember));
+}
+.kc-card__title { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 1rem; color: var(--ink); }
+.kc-card__desc { font-size: 0.875rem; color: var(--ink-muted); line-height: 1.6; }
+
+/* ── 8. Philosophy — "Day 1" reveal morph ─────────────────────── */
+.kc-split { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 4rem; align-items: center; }
+
+.kc-morph {
+  position: relative;
+  aspect-ratio: 4 / 3.4;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--paper-alt);
+}
+.kc-morph__layer {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.kc-morph__layer--blueprint { opacity: 1; transform: scale(1); }
+.kc-morph__layer--reveal { opacity: 0; transform: scale(0.92); }
+.is-morphed .kc-morph__layer--blueprint { opacity: 0; transform: scale(1.06); }
+.is-morphed .kc-morph__layer--reveal { opacity: 1; transform: scale(1); }
+.kc-morph__tag {
+  position: absolute; top: 1.25rem; left: 1.25rem;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.08em;
+  padding: 0.375rem 0.75rem; border-radius: 100px;
+  background: var(--paper); border: 1px solid var(--border);
+  color: var(--ink-muted);
+  z-index: 2;
+  transition: opacity 0.4s ease;
+}
+.is-morphed .kc-morph__tag--before { opacity: 0; }
+.kc-morph__tag--after { opacity: 0; background: var(--ember); color: #fff; border-color: transparent; }
+.is-morphed .kc-morph__tag--after { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kc-morph__layer { transition: none; }
+}
+
+/* ── 9. The Climb — horizontal drag-scroll filmstrip ─────────── */
+.kc-filmstrip-wrap {
+  position: relative;
+  margin-top: 3rem;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%);
+}
+.kc-filmstrip {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 0.5rem 4vw 1.5rem;
+  cursor: grab;
+  scrollbar-width: none;
+}
+.kc-filmstrip:active { cursor: grabbing; }
+.kc-filmstrip::-webkit-scrollbar { display: none; }
+
+.kc-day-card {
+  scroll-snap-align: start;
+  flex: 0 0 240px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.625rem;
+  position: relative;
+}
+.kc-day-card--summit { background: var(--ember); border-color: transparent; color: #fff; }
+.kc-day-card--summit .kc-day-card__desc { color: rgba(255, 255, 255, 0.82); }
+.kc-day-card__num {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--ember-deep);
+  margin-bottom: 0.875rem;
+}
+html[data-theme="dark"] .kc-day-card__num { color: var(--ember); }
+.kc-day-card--summit .kc-day-card__num { color: rgba(255, 255, 255, 0.85); }
+.kc-day-card__title { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; }
+.kc-day-card__desc { font-size: 0.8125rem; color: var(--ink-muted); line-height: 1.6; }
+
+.kc-drag-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+  margin-top: 1rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kc-drag-hint svg { animation: kcNudge 1.6s ease-in-out infinite; }
+}
+@keyframes kcNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+
+/* ── 10. Programs ─────────────────────────────────────────────── */
+.kc-pill {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--violet) 16%, var(--paper));
+  color: var(--violet-deep);
+}
+html[data-theme="dark"] .kc-pill { color: var(--violet); }
+
+/* ── 11. For Schools + confetti form ──────────────────────────── */
+.kc-schools-info { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+.kc-schools-info li { display: flex; gap: 0.75rem; align-items: flex-start; font-size: 0.9375rem; color: var(--ink-muted); list-style: none; }
+.kc-schools-info svg { color: var(--ember-deep); flex-shrink: 0; margin-top: 0.1875rem; }
+html[data-theme="dark"] .kc-schools-info svg { color: var(--ember); }
+
+.kc-form-card {
+  position: relative;
+  background: var(--paper-alt);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 2.25rem;
+  overflow: hidden;
+}
+.kc-form-card__title { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 1.1875rem; color: var(--ink); }
+.kc-field { display: flex; flex-direction: column; gap: 0.4375rem; }
+.kc-field label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em; color: var(--ink-muted); }
+.kc-field input, .kc-field textarea {
+  background: var(--paper);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 0.75rem 0.9375rem;
+  font-size: 0.9375rem;
+  color: var(--ink);
+  resize: vertical;
+}
+.kc-field input::placeholder, .kc-field textarea::placeholder { color: var(--ink-muted); opacity: 0.6; }
+.kc-field input:focus, .kc-field textarea:focus { outline: 2px solid var(--ember); outline-offset: 1px; border-color: var(--ember); }
+
+.kc-form__success { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.875rem; text-align: center; min-height: 300px; color: var(--ink); }
+.kc-form__success svg { color: var(--ember-deep); }
+html[data-theme="dark"] .kc-form__success svg { color: var(--ember); }
+
+.kc-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.kc-confetti span {
+  position: absolute;
+  top: 45%; left: 50%;
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  animation: kcConfetti 1.1s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+}
+@keyframes kcConfetti {
+  to {
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kc-confetti { display: none; }
+}
+
+/* ── 12. Final CTA — sunrise callback ─────────────────────────── */
+.kc-final {
+  position: relative;
+  background: var(--night);
+  color: var(--cream-text);
+  text-align: center;
+  padding: 6.5rem 2rem;
+  overflow: hidden;
+}
+.kc-final__h2 { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.16; margin-bottom: 1.25rem; }
+.kc-final__sub { font-size: 1.125rem; color: rgba(247, 241, 230, 0.76); max-width: 520px; margin: 0 auto 2.25rem; }
+
+/* ── 13. Footer ────────────────────────────────────────────────── */
+.kc-footer { position: relative; background: var(--night-alt); color: var(--cream-text); padding: 3rem 2rem 2.25rem; }
+.kc-footer__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; flex-wrap: wrap; padding-bottom: 2.5rem; }
+.kc-footer__tagline { font-size: 0.9375rem; color: rgba(247, 241, 230, 0.68); margin-top: 0.625rem; }
+.kc-footer__meta { font-size: 0.8125rem; color: rgba(247, 241, 230, 0.5); margin-top: 0.5rem; }
+.kc-footer__cols { display: flex; gap: 3.5rem; flex-wrap: wrap; }
+.kc-footer__col-title { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.9375rem; }
+.kc-footer__col ul { list-style: none; display: flex; flex-direction: column; gap: 0.625rem; }
+.kc-footer__col li { font-size: 0.8125rem; color: rgba(247, 241, 230, 0.68); cursor: pointer; }
+.kc-footer__col li:hover { color: var(--cream-text); }
+.kc-footer__bottom {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 1.75rem; border-top: 1px solid rgba(247, 241, 230, 0.12);
+  font-size: 0.75rem; color: rgba(247, 241, 230, 0.5);
+  flex-wrap: wrap; gap: 0.75rem;
+}
+
+/* ── 14. Responsive ────────────────────────────────────────────── */
+@media (max-width: 899px) {
+  .kc-navlinks { display: none; }
+  .kc-split { grid-template-columns: 1fr; gap: 2.75rem; }
+  .kc-grid { grid-template-columns: repeat(2, 1fr); }
+  .kc-section { padding: 5rem 0; }
+}
+
+@media (max-width: 639px) {
+  .kc-container { padding: 0 1.25rem; }
+  .kc-hero { padding: 6rem 1.25rem 2.5rem; min-height: 92vh; }
+  .kc-grid { grid-template-columns: 1fr; }
+  .kc-nav { padding: 1rem 1.25rem; }
+  .kc-nav--scrolled { padding: 0.75rem 1.25rem; }
+  .kc-footer__top { flex-direction: column; gap: 1.75rem; }
+  .kc-footer__bottom { flex-direction: column; align-items: flex-start; }
+  .kc-day-card { flex-basis: 220px; }
+}
