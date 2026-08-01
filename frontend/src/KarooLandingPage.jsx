@@ -9,9 +9,9 @@ import "./karoo-landing.css";
    THE CLIMB — Karoo's emblem (mountain, switchback path, rising
    sun) staged as a real cinematic scene rather than a small
    badge: a sunrise-over-mountains hero with parallax, and a
-   horizontal drag-scroll filmstrip for the Day 1 → Day 10
-   journey later in the page. Every illustration is hand-authored
-   inline SVG; no external image assets.
+   two-row climb roadmap for the Day 1 → Day 10 journey later in
+   the page. Every illustration is hand-authored inline SVG; no
+   external image assets.
    ──────────────────────────────────────────────────────────── */
 
 const STARS = [
@@ -38,8 +38,9 @@ function MountainMark({ size = 28 }) {
 /* Cinematic hero backdrop — layered mountain silhouettes drifting
    at different parallax speeds behind a rising, glowing sun, with
    a switchback trail that draws itself climbing the tallest peak,
-   drifting clouds, slow-turning sun rays, and a compact rim-lit
-   silhouette scene (kid, RC car, waving robot) at the tree line.
+   drifting clouds and slow-turning sun rays. Every color pulls from
+   --hero-* CSS variables, so the whole scene recolors between a
+   bright morning sky (light mode) and the night sunrise (dark mode).
 
    Each mountain layer is three nested <g>s so the mount reveal,
    the ambient drift and the JS scroll-parallax each own a single
@@ -47,15 +48,20 @@ function MountainMark({ size = 28 }) {
      .kc-mtn-parallax  ← ref target, JS sets style.transform only
        .kc-mtn-reveal    CSS: slide + fade in once, on mount
          .kc-mtn-drift    CSS: infinite slow horizontal sway */
-function HeroSky({ backRef, midRef, frontRef }) {
+function HeroSky({ backRef, midRef, frontRef, isDark }) {
   return (
     <div className="kc-sky" aria-hidden="true">
-      <svg viewBox="0 0 1600 620" preserveAspectRatio="xMidYMax slice" role="img" aria-label="A sun rising behind layered mountain silhouettes, with a dashed switchback trail drawing itself up the tallest peak">
+      <svg viewBox="0 0 1600 620" preserveAspectRatio="xMidYMax slice" role="img" aria-label={isDark ? "A moon rising behind layered mountain silhouettes, with a dashed switchback trail drawing itself up the tallest peak" : "A sun rising behind layered mountain silhouettes, with a dashed switchback trail drawing itself up the tallest peak"}>
         <defs>
           <radialGradient id="kcSun" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#FFF3D6" />
             <stop offset="55%" stopColor="var(--gold)" />
             <stop offset="100%" stopColor="var(--ember)" />
+          </radialGradient>
+          <radialGradient id="kcMoon" cx="38%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="55%" stopColor="#E3E7F0" />
+            <stop offset="100%" stopColor="#AEB6C7" />
           </radialGradient>
         </defs>
 
@@ -66,73 +72,59 @@ function HeroSky({ backRef, midRef, frontRef }) {
         </g>
 
         <g transform="translate(300,150)"><g className="kc-cloud kc-cloud--a">
-          <ellipse cx="0" cy="0" rx="50" ry="17" fill="#2A2140" opacity="0.55" />
-          <ellipse cx="34" cy="-7" rx="32" ry="15" fill="#2A2140" opacity="0.55" />
+          <ellipse cx="0" cy="0" rx="50" ry="17" fill="var(--hero-cloud)" opacity="0.55" />
+          <ellipse cx="34" cy="-7" rx="32" ry="15" fill="var(--hero-cloud)" opacity="0.55" />
         </g></g>
         <g transform="translate(1220,95)"><g className="kc-cloud kc-cloud--b">
-          <ellipse cx="0" cy="0" rx="40" ry="14" fill="#2A2140" opacity="0.45" />
-          <ellipse cx="26" cy="-6" rx="26" ry="12" fill="#2A2140" opacity="0.45" />
+          <ellipse cx="0" cy="0" rx="40" ry="14" fill="var(--hero-cloud)" opacity="0.45" />
+          <ellipse cx="26" cy="-6" rx="26" ry="12" fill="var(--hero-cloud)" opacity="0.45" />
         </g></g>
 
-        <g transform="translate(800,255)">
-          <g className="kc-sun-rays">
-            {[0, 45, 90, 135, 180, 225, 270, 315].map(a => (
-              <line key={a} x1="0" y1="-84" x2="0" y2="-100" transform={`rotate(${a})`} stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-            ))}
+        {isDark ? (
+          <g className="kc-moon">
+            <circle cx="800" cy="255" r="58" fill="url(#kcMoon)" />
+            <circle cx="822" cy="232" r="8" fill="#9AA3B8" opacity="0.4" />
+            <circle cx="782" cy="270" r="5" fill="#9AA3B8" opacity="0.35" />
+            <circle cx="812" cy="280" r="6" fill="#9AA3B8" opacity="0.3" />
+            <circle cx="770" cy="238" r="3.5" fill="#9AA3B8" opacity="0.3" />
           </g>
-        </g>
-        <circle className="kc-sun" cx="800" cy="255" r="72" fill="url(#kcSun)" />
+        ) : (
+          <>
+            <g transform="translate(800,255)">
+              <g className="kc-sun-rays">
+                {[0, 45, 90, 135, 180, 225, 270, 315].map(a => (
+                  <line key={a} x1="0" y1="-84" x2="0" y2="-100" transform={`rotate(${a})`} stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+                ))}
+              </g>
+            </g>
+            <circle className="kc-sun" cx="800" cy="255" r="72" fill="url(#kcSun)" />
+          </>
+        )}
 
         <g ref={backRef}>
           <g className="kc-mtn-reveal kc-mtn-reveal--back">
             <g className="kc-mtn-drift kc-mtn-drift--back">
-              <path d="M0 620 L0 440 L130 400 L270 450 L410 380 L570 430 L730 370 L890 420 L1050 360 L1210 410 L1370 370 L1600 420 L1600 620 Z" fill="#2A2140" />
+              <path d="M0 620 L0 440 L130 400 L270 450 L410 380 L570 430 L730 370 L890 420 L1050 360 L1210 410 L1370 370 L1600 420 L1600 620 Z" fill="var(--hero-mtn-back)" />
             </g>
           </g>
         </g>
         <g ref={midRef}>
           <g className="kc-mtn-reveal kc-mtn-reveal--mid">
             <g className="kc-mtn-drift kc-mtn-drift--mid">
-              <path d="M0 620 L0 480 L150 340 L290 420 L430 280 L580 400 L700 320 L840 270 L970 360 L1120 280 L1270 370 L1420 300 L1600 400 L1600 620 Z" fill="#211A32" />
+              <path d="M0 620 L0 480 L150 340 L290 420 L430 280 L580 400 L700 320 L840 270 L970 360 L1120 280 L1270 370 L1420 300 L1600 400 L1600 620 Z" fill="var(--hero-mtn-mid)" />
             </g>
           </g>
         </g>
         <g ref={frontRef}>
           <g className="kc-mtn-reveal kc-mtn-reveal--front">
             <g className="kc-mtn-drift kc-mtn-drift--front">
-              <path d="M0 620 L0 520 L190 460 L330 500 L470 400 L630 480 L790 280 L950 440 L1110 360 L1270 460 L1430 400 L1600 480 L1600 620 Z" fill="#171225" />
+              <path d="M0 620 L0 520 L190 460 L330 500 L470 400 L630 480 L790 280 L950 440 L1110 360 L1270 460 L1430 400 L1600 480 L1600 620 Z" fill="var(--hero-mtn-front)" />
               <path
                 className="kc-switchback-path"
                 pathLength="100"
                 d="M660 500 L700 450 L678 420 L714 380 L790 282"
                 fill="none" stroke="var(--ember)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
               />
-
-              {/* compact rim-lit silhouette scene at the tree line —
-                  kid with a remote, RC car, a hint of sunrise on
-                  every edge that faces the light */}
-              <g transform="translate(240,545)">
-                <g fill="#0E0A17">
-                  <circle cx="16" cy="-24" r="10" />
-                  <rect x="9" y="-14" width="14" height="20" rx="4" />
-                  <rect x="-2" y="0" width="90" height="24" rx="10" />
-                  <circle cx="14" cy="26" r="9" />
-                  <circle cx="76" cy="26" r="9" />
-                </g>
-                <path className="kc-rimlight" d="M8 -32 a10 10 0 0 1 15 5" />
-                <path className="kc-rimlight" d="M-1 3 a11 11 0 0 1 15 -2" />
-                <circle cx="14" cy="26" r="2.4" fill="var(--ember)" />
-                <circle cx="76" cy="26" r="2.4" fill="var(--ember)" />
-              </g>
-              <g transform="translate(400,530)">
-                <g fill="#0E0A17">
-                  <rect x="0" y="0" width="30" height="26" rx="8" />
-                  <rect x="4" y="26" width="34" height="32" rx="9" />
-                </g>
-                <path className="kc-rimlight" d="M1 1 a9 9 0 0 1 21 4" />
-                <circle cx="19" cy="-6" r="2.2" fill="var(--teal)" />
-                <circle cx="21" cy="42" r="2.4" fill="var(--gold)" />
-              </g>
             </g>
           </g>
         </g>
@@ -310,31 +302,6 @@ function useMountainParallax() {
   return { backRef, midRef, frontRef };
 }
 
-function useDragScroll() {
-  const ref = useRef(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let dragging = false, startX = 0, startScroll = 0;
-    function down(e) { dragging = true; startX = e.pageX; startScroll = el.scrollLeft; }
-    function up() { dragging = false; }
-    function move(e) {
-      if (!dragging) return;
-      e.preventDefault();
-      el.scrollLeft = startScroll - (e.pageX - startX);
-    }
-    el.addEventListener("mousedown", down);
-    window.addEventListener("mouseup", up);
-    window.addEventListener("mousemove", move);
-    return () => {
-      el.removeEventListener("mousedown", down);
-      window.removeEventListener("mouseup", up);
-      window.removeEventListener("mousemove", move);
-    };
-  }, []);
-  return ref;
-}
-
 /* Magnetic button — nudges toward the cursor within its own
    bounds; a no-op under prefers-reduced-motion. */
 function MagneticButton({ className, onClick, children, type = "button" }) {
@@ -468,10 +435,10 @@ const CONTACT = [
 ];
 
 export default function KarooLandingPage({ onExploreCourses }) {
+  const { theme } = useTheme();
   const [formData, setFormData] = useState({ name: "", school: "", city: "", phone: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
 
-  const [morphRef, morphed] = useReveal(0.5);
   const [skillsRef, skillsVisible] = useReveal();
   const [filmRef, filmVisible] = useReveal(0.1);
   const [roadmapRef, roadmapVisible] = useReveal(0.15);
@@ -479,7 +446,6 @@ export default function KarooLandingPage({ onExploreCourses }) {
   const progress = useScrollProgress();
   const scrolled = useScrolled();
   const layerRefs = useMountainParallax();
-  const filmstripRef = useDragScroll();
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -510,10 +476,10 @@ export default function KarooLandingPage({ onExploreCourses }) {
 
       {/* ── HERO ── */}
       <section className="kc-hero">
-        <HeroSky backRef={layerRefs.backRef} midRef={layerRefs.midRef} frontRef={layerRefs.frontRef} />
+        <HeroSky backRef={layerRefs.backRef} midRef={layerRefs.midRef} frontRef={layerRefs.frontRef} isDark={theme === "dark"} />
         <span className="kc-badge"><MapPin size={13} /> Nagpur &middot; founded by robotics engineers</span>
         <h1 className="kc-h1">
-          <KineticHeadline text="Karo aur Seekho —" delayStart={0.1} /><br />
+          <KineticHeadline text="Karo aur Seekho" delayStart={0.1} /><br />
           <KineticHeadline text="Do and Learn." delayStart={0.45} />
         </h1>
         <p className="kc-sub">
@@ -539,49 +505,25 @@ export default function KarooLandingPage({ onExploreCourses }) {
       {/* ── PHILOSOPHY — Day 1 reveal ── */}
       <section id="philosophy" className="kc-section">
         <div className="kc-container">
-          <div className="kc-split">
-            <div>
-              <Eyebrow>Our philosophy</Eyebrow>
-              <h2 className="kc-h2">Show the end goal first.<br /><em>Then teach the journey.</em></h2>
-              <p className="kc-p">
-                On Day 1, every student meets a finished, working robot — not a
-                diagram, not a video. A real remote-control car they can pick up
-                and drive across the floor.
-              </p>
-              <p className="kc-p">
-                That single moment of wanting to build <em>that</em> does more
-                than any lecture could. The rest of the workshop is students
-                walking backward from that want, one sensor and one line of
-                code at a time — until, by Day 10, they've rebuilt it themselves.
-              </p>
-              <p className="kc-p" style={{ marginTop: "1.5rem" }}>
-                Karoo was founded by two embedded systems and robotics engineers
-                from Nagpur who believe the same thing: students shouldn't
-                memorize technology. They should build it.
-              </p>
-            </div>
-            <div ref={morphRef} className={`kc-morph ${morphed ? "is-morphed" : ""}`}>
-              <span className="kc-morph__tag kc-morph__tag--before">BEFORE DAY 1</span>
-              <span className="kc-morph__tag kc-morph__tag--after">DAY 1</span>
-              <div className="kc-morph__layer kc-morph__layer--blueprint">
-                <svg width="140" height="100" viewBox="0 0 140 100" aria-hidden="true">
-                  <g stroke="var(--ink-muted)" strokeWidth="2" strokeDasharray="4 6" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="15" y="35" width="90" height="30" rx="12" />
-                    <path d="M40 35 L52 18 L82 18 L94 35" />
-                    <circle cx="38" cy="72" r="12" /><circle cx="88" cy="72" r="12" />
-                  </g>
-                </svg>
-              </div>
-              <div className="kc-morph__layer kc-morph__layer--reveal">
-                <svg width="150" height="106" viewBox="0 0 150 106" aria-hidden="true">
-                  <rect x="18" y="38" width="96" height="32" rx="13" fill="var(--ember)" />
-                  <path d="M44 38 L57 20 L89 20 L102 38 Z" fill="var(--ember)" opacity="0.85" />
-                  <circle cx="40" cy="76" r="14" fill="var(--ink)" /><circle cx="40" cy="76" r="5" fill="var(--gold)" />
-                  <circle cx="94" cy="76" r="14" fill="var(--ink)" /><circle cx="94" cy="76" r="5" fill="var(--gold)" />
-                  <circle cx="106" cy="48" r="3.5" fill="var(--teal)" />
-                </svg>
-              </div>
-            </div>
+          <div className="kc-philosophy-text">
+            <Eyebrow>Our philosophy</Eyebrow>
+            <h2 className="kc-h2">Show the end goal first.<br /><em>Then teach the journey.</em></h2>
+            <p className="kc-p">
+              On Day 1, every student meets a finished, working robot — not a
+              diagram, not a video. A real remote-control car they can pick up
+              and drive across the floor.
+            </p>
+            <p className="kc-p">
+              That single moment of wanting to build <em>that</em> does more
+              than any lecture could. The rest of the workshop is students
+              walking backward from that want, one sensor and one line of
+              code at a time — until, by Day 10, they've rebuilt it themselves.
+            </p>
+            <p className="kc-p" style={{ marginTop: "1.5rem" }}>
+              Karoo was founded by two embedded systems and robotics engineers
+              from Nagpur who believe the same thing: students shouldn't
+              memorize technology. They should build it.
+            </p>
           </div>
         </div>
       </section>
@@ -622,28 +564,35 @@ export default function KarooLandingPage({ onExploreCourses }) {
         </div>
       </section>
 
-      {/* ── THE CLIMB — Day 1 to Day 10, drag to explore ── */}
+      {/* ── THE CLIMB — Day 1 to Day 10 roadmap ── */}
       <section id="how-it-works" className="kc-section kc-section--alt" ref={filmRef}>
-        <div className="kc-container" style={{ paddingLeft: 0, paddingRight: 0 }}>
-          <div className="kc-container">
-            <Eyebrow>The climb</Eyebrow>
-            <h2 className="kc-h2">Ten days. One mountain.</h2>
-            <p className="kc-p kc-p--lead">
-              Every day is a step up from the last — until, on Day 10, every
-              student builds and takes home their own working project.
-            </p>
-            <div className="kc-drag-hint"><ChevronRight size={16} /> Drag to explore all ten days</div>
-          </div>
-          <div className={`kc-filmstrip-wrap ${filmVisible ? "is-visible" : ""}`}>
-            <div className="kc-filmstrip" ref={filmstripRef}>
-              {DAYS.map((d, i) => (
-                <div className={`kc-day-card kc-reveal ${d.summit ? "kc-day-card--summit" : ""}`} key={d.title} style={{ "--i": i }}>
-                  <div className="kc-day-card__num">DAY {i + 1}{d.summit ? " · SUMMIT" : ""}</div>
-                  <div className="kc-day-card__title">{d.title}</div>
-                  <div className="kc-day-card__desc">{d.desc}</div>
+        <div className="kc-container">
+          <Eyebrow>The climb</Eyebrow>
+          <h2 className="kc-h2">Ten days. One mountain.</h2>
+          <p className="kc-p kc-p--lead">
+            Every day is a step up from the last — until, on Day 10, every
+            student builds and takes home their own working project.
+          </p>
+          <div className={`kc-climb ${filmVisible ? "is-visible" : ""}`}>
+            {[DAYS.slice(0, 5), DAYS.slice(5, 10)].map((row, r) => (
+              <div className="kc-climb-row" key={r}>
+                <div className="kc-climb-nodes">
+                  {row.map((d, i) => {
+                    const dayNum = r * 5 + i + 1;
+                    return (
+                      <div className={`kc-day-card kc-reveal ${d.summit ? "kc-day-card--summit" : ""}`} key={d.title} style={{ "--i": i }}>
+                        <div className="kc-day-card__num">DAY {dayNum}{d.summit ? " · SUMMIT" : ""}</div>
+                        <div className="kc-day-card__title">{d.title}</div>
+                        <div className="kc-day-card__desc">{d.desc}</div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+                {r === 0 && (
+                  <div className="kc-climb-connector" aria-hidden="true"><ChevronRight size={18} /></div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -657,24 +606,17 @@ export default function KarooLandingPage({ onExploreCourses }) {
             The workshop is stage one, not the whole story. Here's where a
             student can go next.
           </p>
-          <div ref={roadmapRef} className={`kc-roadmap ${roadmapVisible ? "is-visible" : ""}`}>
-            <svg className="kc-roadmap-line" viewBox="0 0 800 60" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M40 40 Q 220 55 260 25 Q 400 -10 540 20 Q 640 40 760 8" />
-              <path className="kc-roadmap-line__fill" pathLength="100" d="M40 40 Q 220 55 260 25 Q 400 -10 540 20 Q 640 40 760 8" />
-            </svg>
-            <div className="kc-roadmap-stages">
-              {ROADMAP.map((s, i) => (
-                <div className={`kc-roadmap-stage kc-reveal ${s.live ? "kc-roadmap-stage--live" : ""}`} key={s.title} style={{ "--i": i }}>
-                  <div className="kc-roadmap-stage__step">Stage {i + 1}</div>
-                  <div className="kc-roadmap-stage__badge" style={{ "--icon-color": s.color }}><s.Icon size={22} /></div>
-                  <div className="kc-card__title">{s.title}</div>
-                  <div className="kc-card__desc">{s.desc}</div>
-                  <span className={`kc-pill ${s.live ? "kc-pill--live" : ""}`} style={{ marginTop: "0.75rem", width: "fit-content" }}>
-                    {s.live ? "Live now" : "Coming soon"}
-                  </span>
-                </div>
-              ))}
-            </div>
+          <div ref={roadmapRef} className={`kc-roadmap-stages ${roadmapVisible ? "is-visible" : ""}`}>
+            {ROADMAP.map((s, i) => (
+              <div className={`kc-roadmap-stage kc-reveal ${s.live ? "kc-roadmap-stage--live" : ""}`} key={s.title} style={{ "--i": i }}>
+                <div className="kc-roadmap-stage__badge" style={{ "--icon-color": s.color }}><s.Icon size={22} /></div>
+                <div className="kc-card__title">{s.title}</div>
+                <div className="kc-card__desc">{s.desc}</div>
+                <span className={`kc-pill ${s.live ? "kc-pill--live" : ""}`} style={{ marginTop: "0.75rem", width: "fit-content" }}>
+                  {s.live ? "Live now" : "Coming soon"}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </section>

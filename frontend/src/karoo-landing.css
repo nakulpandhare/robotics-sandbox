@@ -47,12 +47,23 @@
   --gold-icon:   var(--gold-deep);
   --violet-icon: var(--violet-deep);
 
-  /* fixed regardless of theme — the hero/footer are a permanent
-     night scene, the way a photo of a sunrise doesn't change
-     depending on what time you look at it */
+  /* fixed regardless of theme — the closing CTA and footer stay a
+     permanent night scene, the way a photo of a sunrise doesn't
+     change depending on what time you look at it. The opening hero
+     is different: it's the reader's first impression of light vs.
+     dark mode, so it gets its own theme-aware palette below. */
   --night:      #15111F;
   --night-alt:  #1F1930;
   --cream-text: #F7F1E6;
+
+  /* hero sky — a bright morning scene in light mode */
+  --hero-bg: linear-gradient(180deg, #CBE7F3 0%, #E9F1E3 52%, #FCE7C8 100%);
+  --hero-text: var(--ink);
+  --hero-mtn-back:  #B7CEE0;
+  --hero-mtn-mid:   #93B2C7;
+  --hero-mtn-front: #5E859F;
+  --hero-cloud: #FFFFFF;
+  --hero-star-opacity: 0;
 
   font-family: 'Inter', system-ui, sans-serif;
   background: var(--paper);
@@ -82,6 +93,16 @@ html[data-theme="dark"] .kc {
   --ember-icon:  var(--ember);
   --gold-icon:   var(--gold);
   --violet-icon: var(--violet);
+
+  /* hero sky — the night sunrise scene, dark mode's "true" version
+     of the emblem */
+  --hero-bg: var(--night);
+  --hero-text: var(--cream-text);
+  --hero-mtn-back:  #2A2140;
+  --hero-mtn-mid:   #211A32;
+  --hero-mtn-front: #171225;
+  --hero-cloud: #2A2140;
+  --hero-star-opacity: 1;
 
   /* glassy card surface — a genuinely different card style from
      light mode's flat soft-shadow paper, not just inverted colors */
@@ -121,7 +142,7 @@ html[data-theme="dark"] .kc-eyebrow { color: var(--ember); }
   font-size: clamp(2.5rem, 6vw, 4.75rem);
   line-height: 1.08;
   letter-spacing: -0.01em;
-  color: var(--cream-text);
+  color: var(--hero-text);
 }
 
 .kc-h2 {
@@ -202,7 +223,7 @@ html[data-theme="dark"] .kc-h2 em { color: var(--ember); }
   background: transparent;
   border-bottom: 1px solid transparent;
   transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, padding 0.25s ease;
-  color: var(--cream-text);
+  color: var(--hero-text);
 }
 .kc-nav--scrolled {
   padding: 0.875rem 2rem;
@@ -229,7 +250,7 @@ html[data-theme="dark"] .kc-h2 em { color: var(--ember); }
   list-style: none;
   font-size: 0.9375rem;
   font-weight: 500;
-  color: rgba(247, 241, 230, 0.68);
+  color: color-mix(in srgb, var(--hero-text) 68%, transparent);
 }
 .kc-nav--scrolled .kc-navlinks { color: var(--ink-muted); }
 .kc-navlinks li { cursor: pointer; transition: color 0.15s ease; }
@@ -252,8 +273,8 @@ html[data-theme="dark"] .kc-h2 em { color: var(--ember); }
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 .kc-nav:not(.kc-nav--scrolled) .kc-switch {
-  background: rgba(247, 241, 230, 0.1);
-  border-color: rgba(247, 241, 230, 0.3);
+  background: color-mix(in srgb, var(--hero-text) 10%, transparent);
+  border-color: color-mix(in srgb, var(--hero-text) 30%, transparent);
 }
 html[data-theme="dark"] .kc-switch { background: color-mix(in srgb, var(--violet) 26%, var(--paper-alt)); }
 .kc-switch__thumb {
@@ -299,11 +320,14 @@ html[data-theme="dark"] .kc-switch { background: color-mix(in srgb, var(--violet
 .kc-btn--ember:hover { box-shadow: 0 14px 34px rgba(255, 107, 53, 0.42); }
 
 .kc-btn--outline-onNight {
-  background: rgba(247, 241, 230, 0.06);
-  border-color: rgba(247, 241, 230, 0.35);
-  color: var(--cream-text);
+  background: color-mix(in srgb, var(--hero-text) 6%, transparent);
+  border-color: color-mix(in srgb, var(--hero-text) 35%, transparent);
+  color: var(--hero-text);
 }
-.kc-btn--outline-onNight:hover { background: rgba(247, 241, 230, 0.14); border-color: rgba(247, 241, 230, 0.6); }
+.kc-btn--outline-onNight:hover {
+  background: color-mix(in srgb, var(--hero-text) 14%, transparent);
+  border-color: color-mix(in srgb, var(--hero-text) 60%, transparent);
+}
 
 .kc-btn--teal { background: var(--teal-deep); color: #fff; box-shadow: 0 10px 28px rgba(11, 110, 103, 0.3); }
 html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--night); box-shadow: 0 10px 28px rgba(45, 212, 191, 0.3); }
@@ -312,14 +336,14 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
 .kc-btn--text {
   background: transparent;
   border: none;
-  color: rgba(247, 241, 230, 0.66);
+  color: color-mix(in srgb, var(--hero-text) 66%, transparent);
   padding: 0.4375rem 0;
   text-decoration: underline;
-  text-decoration-color: rgba(247, 241, 230, 0.3);
+  text-decoration-color: color-mix(in srgb, var(--hero-text) 30%, transparent);
   text-underline-offset: 4px;
   border-radius: 0;
 }
-.kc-btn--text:hover { color: var(--cream-text); }
+.kc-btn--text:hover { color: var(--hero-text); }
 
 /* ── 5. Hero — cinematic sunrise-over-mountains ───────────────── */
 .kc-hero {
@@ -331,14 +355,16 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
   justify-content: center;
   text-align: center;
   padding: 7rem 2rem 3rem;
-  background: var(--night);
-  color: var(--cream-text);
+  background: var(--hero-bg);
+  color: var(--hero-text);
   overflow: hidden;
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
 .kc-sky { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
 .kc-sky svg { position: absolute; bottom: 0; left: 50%; width: max(1400px, 160vw); height: auto; transform: translateX(-50%); }
 
+.kc-stars { opacity: var(--hero-star-opacity); transition: opacity 0.4s ease; }
 .kc-stars circle { animation: kcTwinkle 3.6s ease-in-out infinite; }
 @keyframes kcTwinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.85; } }
 
@@ -351,6 +377,7 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
 @media (prefers-reduced-motion: no-preference) {
   .kc-sun { animation: kcSunrise 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both, kcSunGlow 4s ease-in-out 2.4s infinite; transform-origin: center; }
   .kc-sun-rays { animation: kcRaysRotate 46s linear infinite; }
+  .kc-moon { animation: kcSunrise 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both, kcMoonGlow 5s ease-in-out 2.4s infinite; transform-origin: center; }
   .kc-cloud--a { animation: kcCloudDrift 46s ease-in-out infinite; }
   .kc-cloud--b { animation: kcCloudDrift 58s ease-in-out infinite reverse; }
   .kc-mtn-reveal--back  { animation: kcLayerIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -366,6 +393,10 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
   0%, 100% { filter: drop-shadow(0 0 18px rgba(255, 193, 69, 0.55)); }
   50%      { filter: drop-shadow(0 0 34px rgba(255, 193, 69, 0.8)); }
 }
+@keyframes kcMoonGlow {
+  0%, 100% { filter: drop-shadow(0 0 16px rgba(200, 210, 235, 0.45)); }
+  50%      { filter: drop-shadow(0 0 30px rgba(200, 210, 235, 0.7)); }
+}
 @keyframes kcRaysRotate { to { transform: rotate(360deg); } }
 @keyframes kcCloudDrift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(46px); } }
 @keyframes kcLayerIn { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -380,10 +411,6 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
 }
 @keyframes kcDrawPath { to { stroke-dashoffset: 0; } }
 
-/* rim-light on the hero silhouette scene — a thin gold stroke on
-   the side facing the sun, as if lit by it */
-.kc-rimlight { fill: none; stroke: var(--gold); stroke-width: 1.2; stroke-linecap: round; opacity: 0.75; }
-
 .kc-hero > *:not(.kc-sky) { position: relative; z-index: 1; }
 
 .kc-badge {
@@ -395,14 +422,14 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
   letter-spacing: 0.02em;
   padding: 0.5rem 1.125rem;
   border-radius: 100px;
-  background: rgba(247, 241, 230, 0.08);
-  border: 1px solid rgba(247, 241, 230, 0.18);
+  background: color-mix(in srgb, var(--hero-text) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hero-text) 18%, transparent);
   margin-bottom: 1.75rem;
 }
 
 .kc-sub {
   font-size: 1.1875rem;
-  color: rgba(247, 241, 230, 0.76);
+  color: color-mix(in srgb, var(--hero-text) 76%, transparent);
   line-height: 1.7;
   max-width: 600px;
   margin: 1.5rem auto 2.5rem;
@@ -416,16 +443,16 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
   gap: 0.375rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: rgba(247, 241, 230, 0.6);
+  color: color-mix(in srgb, var(--hero-text) 60%, transparent);
   background: none;
   border: none;
   cursor: pointer;
   margin-top: 0.5rem;
   text-decoration: underline;
-  text-decoration-color: rgba(247, 241, 230, 0.3);
+  text-decoration-color: color-mix(in srgb, var(--hero-text) 30%, transparent);
   text-underline-offset: 4px;
 }
-.kc-hero__sandbox-link:hover { color: var(--cream-text); }
+.kc-hero__sandbox-link:hover { color: var(--hero-text); }
 
 .kc-scroll-cue {
   position: absolute;
@@ -439,7 +466,7 @@ html[data-theme="dark"] .kc-btn--teal { background: var(--teal); color: var(--ni
   font-size: 0.6875rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(247, 241, 230, 0.55);
+  color: color-mix(in srgb, var(--hero-text) 55%, transparent);
 }
 @media (prefers-reduced-motion: no-preference) {
   .kc-scroll-cue__line { animation: kcScrollCue 1.8s ease-in-out infinite; }
@@ -500,68 +527,56 @@ html[data-theme="dark"] .kc-card:hover {
 .kc-card__title { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 1rem; color: var(--ink); }
 .kc-card__desc { font-size: 0.875rem; color: var(--ink-muted); line-height: 1.6; }
 
-/* ── 8. Philosophy — "Day 1" reveal morph ─────────────────────── */
+/* ── 8. Philosophy — "Day 1" reveal ───────────────────────────── */
 .kc-split { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 4rem; align-items: center; }
 
-.kc-morph {
-  position: relative;
-  aspect-ratio: 4 / 3.4;
-  border-radius: 24px;
-  border: 1px solid var(--card-border);
-  overflow: hidden;
-  background: color-mix(in srgb, var(--card-bg) 60%, var(--paper-alt));
-  backdrop-filter: var(--card-blur);
-  -webkit-backdrop-filter: var(--card-blur);
-}
-.kc-morph__layer {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.kc-morph__layer--blueprint { opacity: 1; transform: scale(1); }
-.kc-morph__layer--reveal { opacity: 0; transform: scale(0.92); }
-.is-morphed .kc-morph__layer--blueprint { opacity: 0; transform: scale(1.06); }
-.is-morphed .kc-morph__layer--reveal { opacity: 1; transform: scale(1); }
-.kc-morph__tag {
-  position: absolute; top: 1.25rem; left: 1.25rem;
-  font-family: 'Unbounded', sans-serif;
-  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.08em;
-  padding: 0.375rem 0.75rem; border-radius: 100px;
-  background: var(--paper); border: 1px solid var(--border);
-  color: var(--ink-muted);
-  z-index: 2;
-  transition: opacity 0.4s ease;
-}
-.is-morphed .kc-morph__tag--before { opacity: 0; }
-.kc-morph__tag--after { opacity: 0; background: var(--ember); color: #fff; border-color: transparent; }
-.is-morphed .kc-morph__tag--after { opacity: 1; }
+.kc-philosophy-text { max-width: 640px; }
 
-@media (prefers-reduced-motion: reduce) {
-  .kc-morph__layer { transition: none; }
-}
+/* ── 9. The Climb — Day 1 → Day 10 roadmap ────────────────────── */
+.kc-climb { margin-top: 3.5rem; }
 
-/* ── 9. The Climb — horizontal drag-scroll filmstrip ─────────── */
-.kc-filmstrip-wrap {
-  position: relative;
-  margin-top: 3rem;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%);
+.kc-climb-row { position: relative; }
+.kc-climb-nodes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2rem; }
+
+/* flowchart connectors — a dashed stem + solid arrowhead running from
+   the right edge of one day-card to the next, only while the grid is
+   five columns wide (hidden once it wraps at narrower breakpoints) */
+.kc-climb-nodes .kc-day-card:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 100%;
+  width: calc(2rem - 10px);
+  height: 2px;
+  background: repeating-linear-gradient(to right, var(--border-strong) 0 5px, transparent 5px 9px);
+  transform: translateY(-50%);
 }
-.kc-filmstrip {
+.kc-climb-nodes .kc-day-card:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: calc(100% + 2rem - 10px);
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--ember-deep);
+  transform: translateY(-50%);
+}
+html[data-theme="dark"] .kc-climb-nodes .kc-day-card:not(:last-child)::after { border-left-color: var(--ember); }
+
+.kc-climb-connector {
   display: flex;
-  gap: 1.25rem;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  padding: 0.5rem 4vw 1.5rem;
-  cursor: grab;
-  scrollbar-width: none;
+  justify-content: center;
+  align-items: center;
+  margin: 0.5rem 0;
+  color: var(--ember-deep);
 }
-.kc-filmstrip:active { cursor: grabbing; }
-.kc-filmstrip::-webkit-scrollbar { display: none; }
+html[data-theme="dark"] .kc-climb-connector { color: var(--ember); }
+.kc-climb-connector svg { transform: rotate(90deg); }
+@media (prefers-reduced-motion: no-preference) {
+  .kc-climb-connector svg { animation: kcNudgeDown 1.6s ease-in-out infinite; }
+}
+@keyframes kcNudgeDown { 0%, 100% { transform: rotate(90deg) translateX(0); } 50% { transform: rotate(90deg) translateX(6px); } }
 
 .kc-day-card {
-  scroll-snap-align: start;
-  flex: 0 0 240px;
   background: var(--card-bg);
   backdrop-filter: var(--card-blur);
   -webkit-backdrop-filter: var(--card-blur);
@@ -584,19 +599,6 @@ html[data-theme="dark"] .kc-day-card__num { color: var(--ember); }
 .kc-day-card--summit .kc-day-card__num { color: rgba(255, 255, 255, 0.85); }
 .kc-day-card__title { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; }
 .kc-day-card__desc { font-size: 0.8125rem; color: var(--ink-muted); line-height: 1.6; }
-
-.kc-drag-hint {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  color: var(--ink-muted);
-  margin-top: 1rem;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .kc-drag-hint svg { animation: kcNudge 1.6s ease-in-out infinite; }
-}
-@keyframes kcNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
 
 /* ── 10. Roadmap — the road beyond the workshop ───────────────── */
 .kc-pill {
@@ -624,34 +626,16 @@ html[data-theme="dark"] .kc-pill--live { color: var(--teal); }
   .kc-pill--live::before { animation: kcPulse 2s ease-in-out infinite; }
 }
 
-.kc-roadmap { position: relative; margin-top: 4rem; }
-.kc-roadmap-line {
-  position: absolute;
-  left: 0; right: 0; top: 26px;
-  height: 60px;
-  overflow: visible;
-  pointer-events: none;
+.kc-roadmap-stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-top: 3rem; }
+.kc-roadmap-stage {
+  text-align: left;
+  background: var(--card-bg);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 1.625rem;
 }
-.kc-roadmap-line path {
-  fill: none;
-  stroke: var(--border-strong);
-  stroke-width: 2;
-  stroke-dasharray: 7 7;
-}
-.kc-roadmap-line path.kc-roadmap-line__fill {
-  stroke: var(--ember-deep);
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  transition: stroke-dashoffset 1.6s cubic-bezier(0.65, 0, 0.35, 1);
-}
-html[data-theme="dark"] .kc-roadmap-line path.kc-roadmap-line__fill { stroke: var(--ember); }
-.is-visible .kc-roadmap-line path.kc-roadmap-line__fill { stroke-dashoffset: 0; }
-@media (prefers-reduced-motion: reduce) {
-  .kc-roadmap-line path.kc-roadmap-line__fill { stroke-dashoffset: 0; transition: none; }
-}
-
-.kc-roadmap-stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; position: relative; z-index: 1; }
-.kc-roadmap-stage { text-align: left; }
 .kc-roadmap-stage__badge {
   width: 52px; height: 52px;
   border-radius: 16px;
@@ -667,7 +651,6 @@ html[data-theme="dark"] .kc-roadmap-line path.kc-roadmap-line__fill { stroke: va
   border-color: transparent;
   box-shadow: 0 10px 24px rgba(255, 107, 53, 0.32);
 }
-.kc-roadmap-stage__step { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.08em; color: var(--ink-muted); margin-bottom: 0.375rem; text-transform: uppercase; }
 
 /* ── 11. For Schools + confetti form ──────────────────────────── */
 .kc-schools-info { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
@@ -758,7 +741,9 @@ html[data-theme="dark"] .kc-form__success svg { color: var(--ember); }
   .kc-grid { grid-template-columns: repeat(2, 1fr); }
   .kc-section { padding: 5rem 0; }
   .kc-roadmap-stages { grid-template-columns: repeat(2, 1fr); row-gap: 2.5rem; }
-  .kc-roadmap-line { display: none; }
+  .kc-climb-nodes { grid-template-columns: repeat(2, 1fr); row-gap: 1.25rem; }
+  .kc-climb-nodes .kc-day-card::before,
+  .kc-climb-nodes .kc-day-card::after { display: none; }
 }
 
 @media (max-width: 639px) {
@@ -769,6 +754,6 @@ html[data-theme="dark"] .kc-form__success svg { color: var(--ember); }
   .kc-nav--scrolled { padding: 0.75rem 1.25rem; }
   .kc-footer__top { flex-direction: column; gap: 1.75rem; }
   .kc-footer__bottom { flex-direction: column; align-items: flex-start; }
-  .kc-day-card { flex-basis: 220px; }
   .kc-roadmap-stages { grid-template-columns: 1fr; }
+  .kc-climb-nodes { grid-template-columns: 1fr; }
 }
