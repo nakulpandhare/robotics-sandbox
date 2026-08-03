@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./theme/ThemeContext";
 import {
   MapPin, Mail, Phone, Check, ArrowRight, PartyPopper, Bot, ChevronRight, Sun, Moon,
+  SoapDispenserDroplet,
+  ChevronLeft,
 } from "lucide-react";
 import "./karoo-landing.css";
 
@@ -489,7 +491,7 @@ export default function KarooLandingPage({ onExploreCourses }) {
         </p>
         <div className="kc-hero__buttons">
           <MagneticButton className="kc-btn kc-btn--ember kc-btn--lg" onClick={() => scrollTo("contact")}>
-            Book a Workshop for Your School <ArrowRight size={16} />
+            Book a Workshop <ArrowRight size={16} />
           </MagneticButton>
           <MagneticButton className="kc-btn kc-btn--outline-onNight kc-btn--lg" onClick={() => scrollTo("philosophy")}>
             See How It Works
@@ -568,7 +570,7 @@ export default function KarooLandingPage({ onExploreCourses }) {
       <section id="how-it-works" className="kc-section kc-section--alt" ref={filmRef}>
         <div className="kc-container">
           <Eyebrow>The climb</Eyebrow>
-          <h2 className="kc-h2">Ten days. One mountain.</h2>
+          <h2 className="kc-h2">Ten days. One Mountain.</h2>
           <p className="kc-p kc-p--lead">
             Every day is a step up from the last — until, on Day 10, every
             student builds and takes home their own working project.
@@ -589,7 +591,7 @@ export default function KarooLandingPage({ onExploreCourses }) {
                   })}
                 </div>
                 {r === 0 && (
-                  <div className="kc-climb-connector" aria-hidden="true"><ChevronRight size={18} /></div>
+                  <div className="kc-climb-connector" aria-hidden="true"><roadmapVisible size={18} /></div>
                 )}
               </div>
             ))}
