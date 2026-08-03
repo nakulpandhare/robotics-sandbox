@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./theme/ThemeContext";
 import {
   MapPin, Mail, Phone, Check, ArrowRight, PartyPopper, Bot, ChevronRight, Sun, Moon,
-  SoapDispenserDroplet,
-  ChevronLeft,
 } from "lucide-react";
+import MountainMark from "./BrandMark";
 import "./karoo-landing.css";
 
 /* ────────────────────────────────────────────────────────────
@@ -24,18 +23,6 @@ const STARS = [
   { x: 1400, y: 90, r: 1.3, d: 2.1 }, { x: 340, y: 40, r: 1.1, d: 1.3 },
   { x: 860, y: 190, r: 1.4, d: 0.7 }, { x: 1480, y: 170, r: 1.2, d: 1.9 },
 ];
-
-/* Brand emblem — mountain range, switchback path, rising sun. */
-function MountainMark({ size = 28 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <circle cx="16" cy="16" r="14.25" stroke="currentColor" strokeWidth="1.2" opacity="0.3" />
-      <circle cx="21" cy="10" r="2.1" fill="var(--gold)" />
-      <path d="M7 22 L12 14 L15 17 L19 9 L23 18 L26 22" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" fill="none" />
-      <path d="M10 22 L13 17.5 L11.5 15 L14.5 11.5 L14 9.5" stroke="var(--ember)" strokeWidth="1.3" strokeDasharray="2.2 2.2" strokeLinecap="round" fill="none" />
-    </svg>
-  );
-}
 
 /* Cinematic hero backdrop — layered mountain silhouettes drifting
    at different parallax speeds behind a rising, glowing sun, with
@@ -591,7 +578,7 @@ export default function KarooLandingPage({ onExploreCourses }) {
                   })}
                 </div>
                 {r === 0 && (
-                  <div className="kc-climb-connector" aria-hidden="true"><roadmapVisible size={18} /></div>
+                  <div className="kc-climb-connector" aria-hidden="true"><ChevronRight size={18} /></div>
                 )}
               </div>
             ))}

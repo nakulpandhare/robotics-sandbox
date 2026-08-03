@@ -2,6 +2,8 @@
    KAROO — Global Stylesheet
    ============================================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
 /* ── 1. Base reset ─────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -34,125 +36,159 @@ code, pre, .mono {
 
 img, canvas, svg { display: block; max-width: 100%; }
 
-/* ── 2. Theme tokens ────────────────────────────────────────── */
+/* ── 2. Theme tokens ────────────────────────────────────────────
+   Same palette as karoo-landing.css (the marketing site), so the
+   app pages read as one product rather than a different skin.
+   Legacy variable names (--amber, --green, --bg-amber, etc.) are
+   kept as aliases onto the new tokens so every existing call site
+   recolors without needing to be touched individually. ──────── */
 
 /* Light mode (default) */
 :root,
 :root[data-theme="light"] {
+  /* Brand palette */
+  --ember:      #FF6B35;
+  --ember-deep: #B8431A;
+  --gold:       #FFC145;
+  --gold-deep:  #8A5E00;
+  --teal:       #12B8A6;
+  --teal-deep:  #0B6E67;
+  --violet:     #7C5CFC;
+  --violet-deep:#4A35B0;
+
+  /* on-paper glyph colors: deep shade in light mode for contrast,
+     bright shade in dark mode (see dark block below) */
+  --ember-icon:  var(--ember-deep);
+  --teal-icon:   var(--teal-deep);
+  --gold-icon:   var(--gold-deep);
+  --violet-icon: var(--violet-deep);
+
   /* Surfaces */
-  --bg-primary:     #fafaf8;
+  --bg-primary:     #FBF7F2;
   --bg-card:        #ffffff;
-  --bg-dark:        #f4f0e8;
-  --bg-amber:       #fffbeb;
-  --bg-green:       #f0fdf4;
+  --bg-dark:        #F1E9DE;
+  --bg-amber:       color-mix(in srgb, var(--ember) 10%, var(--bg-primary));
+  --bg-green:       color-mix(in srgb, var(--teal) 10%, var(--bg-primary));
   --bg-red:         #fef2f2;
 
   /* Borders */
-  --border:         #e8e4dc;
-  --border-amber:   #fde68a;
-  --border-green:   #bbf7d0;
-  --border-strong:  #d1cfc7;
+  --border:         rgba(26, 21, 36, 0.10);
+  --border-amber:   color-mix(in srgb, var(--ember) 40%, transparent);
+  --border-green:   color-mix(in srgb, var(--teal) 35%, transparent);
+  --border-strong:  rgba(26, 21, 36, 0.20);
 
   /* Text */
-  --text-primary:   #0a0a0a;
-  --text-secondary: #6b7280;
-  --text-dim:       #9ca3af;
-  --text-amber:     #92400e;
-  --text-green:     #065f46;
-  --text-red:       #dc2626;
+  --text-primary:   #1A1524;
+  --text-secondary: rgba(26, 21, 36, 0.64);
+  --text-dim:       rgba(26, 21, 36, 0.44);
+  --text-amber:     var(--ember-icon);
+  --text-green:     var(--teal-icon);
+  --text-red:       #C23B2E;
 
-  /* Brand */
-  --amber:          #d97706;
-  --amber-bg:       #fef3c7;
-  --amber-text:     #92400e;
-  --amber-dark:     #b45309;
-  --green:          #0f6e56;
-  --green-bg:       #f0fdf4;
-  --green-text:     #065f46;
+  /* Brand (legacy aliases) */
+  --amber:          var(--ember-icon);
+  --amber-bg:       var(--bg-amber);
+  --amber-text:     var(--ember-icon);
+  --amber-dark:     var(--ember-deep);
+  --green:          var(--teal-icon);
+  --green-bg:       var(--bg-green);
+  --green-text:     var(--teal-icon);
 
-  /* Editor / console */
-  --editor-bg:      #1a1a18;
-  --console-bg:     #111111;
-  --console-border: #2a2a28;
-  --console-text:   #4b5563;
+  /* Editor / console — always a dark "night" surface, like a code
+     editor, regardless of site theme */
+  --editor-bg:      #15111F;
+  --console-bg:     #0D0A15;
+  --console-border: rgba(247, 241, 230, 0.12);
+  --console-text:   rgba(247, 241, 230, 0.5);
 
   /* Canvas */
-  --canvas-bg:      #fafaf8;
-  --canvas-grid:    #f0ece4;
-  --canvas-border:  #e8e4dc;
-  --canvas-obstacle:#d6d3cd;
-  --canvas-trail:   rgba(15,110,86,0.25);
+  --canvas-bg:      var(--bg-primary);
+  --canvas-grid:    var(--bg-dark);
+  --canvas-border:  var(--border);
+  --canvas-obstacle:#CFC6BC;
+  --canvas-trail:   color-mix(in srgb, var(--teal) 30%, transparent);
 
   /* Nav / banner */
-  --nav-bg:         rgba(255,255,255,0.92);
-  --nav-border:     #e8e4dc;
-  --banner-bg:      #fffbeb;
-  --banner-border:  #fde68a;
-  --banner-text:    #92400e;
+  --nav-bg:         rgba(251, 247, 242, 0.92);
+  --nav-border:     var(--border);
+  --banner-bg:      var(--bg-amber);
+  --banner-border:  var(--border-amber);
+  --banner-text:    var(--ember-icon);
 
   /* Shadows */
-  --shadow-sm:  0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md:  0 4px 12px rgba(0,0,0,0.08);
-  --shadow-lg:  0 8px 24px rgba(0,0,0,0.10);
+  --shadow-sm:  0 2px 12px rgba(26, 21, 36, 0.06);
+  --shadow-md:  0 18px 40px rgba(26, 21, 36, 0.12);
+  --shadow-lg:  0 24px 56px rgba(26, 21, 36, 0.16);
 }
 
 /* Dark mode */
 :root[data-theme="dark"] {
+  /* Brand palette — brighter variants, deep-only shades unchanged */
+  --ember: #FF8259;
+  --gold:  #FFD166;
+  --teal:  #2DD4BF;
+  --violet:#9B82FF;
+
+  --ember-icon:  var(--ember);
+  --teal-icon:   var(--teal);
+  --gold-icon:   var(--gold);
+  --violet-icon: var(--violet);
+
   /* Surfaces */
-  --bg-primary:     #0a0a0a;
-  --bg-card:        #161614;
-  --bg-dark:        #1f1f1d;
-  --bg-amber:       rgba(217,119,6,0.08);
-  --bg-green:       rgba(15,110,86,0.08);
-  --bg-red:         rgba(220,38,38,0.08);
+  --bg-primary:     #0D0A15;
+  --bg-card:        #171122;
+  --bg-dark:        #1C1628;
+  --bg-amber:       color-mix(in srgb, var(--ember) 14%, var(--bg-primary));
+  --bg-green:       color-mix(in srgb, var(--teal) 14%, var(--bg-primary));
+  --bg-red:         rgba(220,38,38,0.1);
 
   /* Borders */
-  --border:         #2a2a28;
-  --border-amber:   rgba(253,230,138,0.3);
-  --border-green:   rgba(134,239,172,0.2);
-  --border-strong:  #3a3a38;
+  --border:         rgba(247, 241, 230, 0.14);
+  --border-amber:   color-mix(in srgb, var(--ember) 35%, transparent);
+  --border-green:   color-mix(in srgb, var(--teal) 30%, transparent);
+  --border-strong:  rgba(247, 241, 230, 0.26);
 
   /* Text */
-  --text-primary:   #f9fafb;
-  --text-secondary: #9ca3af;
-  --text-dim:       #6b7280;
-  --text-amber:     #fcd34d;
-  --text-green:     #34d399;
-  --text-red:       #f87171;
+  --text-primary:   #F7F1E6;
+  --text-secondary: rgba(247, 241, 230, 0.66);
+  --text-dim:       rgba(247, 241, 230, 0.44);
+  --text-amber:     var(--ember-icon);
+  --text-green:     var(--teal-icon);
+  --text-red:       #FF8A7A;
 
-  /* Brand */
-  --amber:          #f59e0b;
-  --amber-bg:       rgba(245,158,11,0.12);
-  --amber-text:     #fcd34d;
-  --amber-dark:     #d97706;
-  --green:          #10b981;
-  --green-bg:       rgba(16,185,129,0.1);
-  --green-text:     #34d399;
+  /* Brand (legacy aliases) */
+  --amber:          var(--ember-icon);
+  --amber-bg:       var(--bg-amber);
+  --amber-text:     var(--ember-icon);
+  --amber-dark:     var(--ember);
+  --green:          var(--teal-icon);
+  --green-bg:       var(--bg-green);
+  --green-text:     var(--teal-icon);
 
   /* Editor / console */
-  --editor-bg:      #0d0d0b;
-  --console-bg:     #0a0a0a;
-  --console-border: #1f1f1d;
-  --console-text:   #4b5563;
+  --editor-bg:      #0B0812;
+  --console-bg:     #0B0812;
+  --console-border: rgba(247, 241, 230, 0.12);
+  --console-text:   rgba(247, 241, 230, 0.5);
 
   /* Canvas */
-  --canvas-bg:      #161614;
-  --canvas-grid:    #1f1f1d;
-  --canvas-border:  #2a2a28;
-  --canvas-obstacle:#2a2a28;
-  --canvas-trail:   rgba(16,185,129,0.2);
+  --canvas-bg:      var(--bg-card);
+  --canvas-grid:    var(--bg-dark);
+  --canvas-border:  var(--border);
+  --canvas-obstacle:#332B44;
+  --canvas-trail:   color-mix(in srgb, var(--teal) 35%, transparent);
 
   /* Nav / banner */
-  --nav-bg:         rgba(10,10,10,0.92);
-  --nav-border:     #2a2a28;
-  --banner-bg:      rgba(217,119,6,0.06);
-  --banner-border:  rgba(253,230,138,0.2);
-  --banner-text:    #fcd34d;
+  --nav-bg:         rgba(13, 10, 21, 0.92);
+  --nav-border:     var(--border);
+  --banner-bg:      var(--bg-amber);
+  --banner-border:  var(--border-amber);
+  --banner-text:    var(--ember-icon);
 
   /* Shadows */
-  --shadow-sm:  0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md:  0 4px 12px rgba(0,0,0,0.4);
-  --shadow-lg:  0 8px 24px rgba(0,0,0,0.5);
+  --shadow-sm:  0 2px 12px rgba(0, 0, 0, 0.35);
+  --shadow-md:  0 20px 44px rgba(0, 0, 0, 0.5);
+  --shadow-lg:  0 28px 60px rgba(0, 0, 0, 0.6);
 }
 
 /* Smooth theme transition — exclude layout properties to prevent flicker */
@@ -221,18 +257,19 @@ img, canvas, svg { display: block; max-width: 100%; }
 .nav__logo {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  font-weight: 800;
-  font-size: 1.125rem;
+  gap: 0.5rem;
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 700;
+  font-size: 1.0625rem;
   color: var(--text-primary);
   text-decoration: none;
   cursor: pointer;
   background: none;
   border: none;
   padding: 0;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
-.nav__logo span { color: var(--amber); }
+.nav__logo span { color: var(--ember-icon); }
 
 .nav__links {
   display: flex;
@@ -269,57 +306,60 @@ img, canvas, svg { display: block; max-width: 100%; }
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.8125rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 100px;
   padding: 0.625rem 1.25rem;
   cursor: pointer;
-  border: none;
-  transition: opacity 0.15s, box-shadow 0.15s, transform 0.1s;
+  border: 1.5px solid transparent;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, background 0.15s ease, opacity 0.15s ease;
   text-decoration: none;
   white-space: nowrap;
 }
-.btn:active  { transform: translateY(1px); }
+.btn:active  { transform: scale(0.96); }
 .btn:disabled{ opacity: 0.5; cursor: not-allowed; transform: none; }
 
 .btn--primary {
-  background: var(--amber);
+  background: var(--ember);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(217,119,6,0.25);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ember) 32%, transparent);
 }
-.btn--primary:hover { opacity: 0.9; }
+.btn--primary:hover { box-shadow: 0 12px 30px color-mix(in srgb, var(--ember) 42%, transparent); }
 
 .btn--green {
-  background: var(--green);
+  background: var(--teal-deep);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(15,110,86,0.2);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--teal) 26%, transparent);
 }
-.btn--green:hover { opacity: 0.9; }
+html[data-theme="dark"] .btn--green { background: var(--teal); color: var(--bg-primary); }
+.btn--green:hover { filter: brightness(1.08); }
 
 .btn--outline {
   background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-strong);
+  border: 1.5px solid var(--border-strong);
 }
 .btn--outline:hover { background: var(--bg-dark); }
 
 .btn--ghost {
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
 }
 .btn--ghost:hover { background: var(--bg-dark); color: var(--text-primary); }
 
 .btn--sm { font-size: 0.75rem;  padding: 0.375rem 0.75rem; }
-.btn--lg { font-size: 1rem;     padding: 0.75rem 1.75rem; }
+.btn--lg { font-size: 0.9375rem; padding: 0.875rem 2rem; }
 
 .btn--run {
-  background: var(--amber);
+  background: var(--ember);
   color: #ffffff;
-  font-weight: 700;
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 600;
   padding: 0.5rem 1.25rem;
-  font-size: 0.875rem;
-  border-radius: 8px;
+  font-size: 0.8125rem;
+  border-radius: 100px;
   border: none;
   cursor: pointer;
   display: flex;
@@ -332,22 +372,23 @@ img, canvas, svg { display: block; max-width: 100%; }
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 0.3125rem;
   font-size: 0.6875rem;
   font-weight: 700;
-  padding: 0.2rem 0.625rem;
-  border-radius: 20px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 100px;
   letter-spacing: 0.04em;
 }
-.badge--amber          { background: var(--amber-bg);   color: var(--amber-text); }
-.badge--green          { background: var(--green-bg);   color: var(--green-text); }
+.badge--amber          { background: color-mix(in srgb, var(--ember) 16%, var(--bg-card)); color: var(--ember-icon); }
+.badge--green          { background: color-mix(in srgb, var(--teal) 18%, var(--bg-card));  color: var(--teal-icon); }
 .badge--outline-amber  {
   background: transparent;
-  color: var(--amber-text);
+  color: var(--ember-icon);
   border: 0.5px solid var(--border-amber);
 }
 .badge--outline-green  {
   background: transparent;
-  color: var(--green-text);
+  color: var(--teal-icon);
   border: 0.5px solid var(--border-green);
 }
 
@@ -355,39 +396,51 @@ img, canvas, svg { display: block; max-width: 100%; }
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  transition: box-shadow 0.15s;
+  border-radius: 16px;
+  transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.card:hover    { box-shadow: var(--shadow-sm); }
+.card:hover    { box-shadow: var(--shadow-md); transform: translateY(-3px); }
 .card--amber   { background: var(--bg-amber); border-color: var(--border-amber); }
 .card--green   { background: var(--bg-green); border-color: var(--border-green); }
 
-/* ── 9. Theme toggle ────────────────────────────────────────── */
+/* ── 9. Theme toggle — same pill-with-gold-thumb as the landing
+   page's kc-switch, so the control reads identically everywhere */
 .theme-toggle {
+  position: relative;
   display: flex;
   align-items: center;
-  border-radius: 20px;
-  background: var(--bg-dark);
-  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--gold) 22%, var(--bg-dark));
+  border: 1px solid var(--border-strong);
   cursor: pointer;
-  transition: background 0.2s;
+  padding: 3px;
   flex-shrink: 0;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
-.theme-toggle--md { width: 52px; height: 28px; padding: 3px; }
-.theme-toggle--sm { width: 44px; height: 24px; padding: 3px; }
+html[data-theme="dark"] .theme-toggle { background: color-mix(in srgb, var(--violet) 26%, var(--bg-dark)); }
+.theme-toggle--md { width: 58px; height: 32px; }
+.theme-toggle--sm { width: 50px; height: 28px; }
 
 .theme-toggle__dot {
+  position: relative;
   border-radius: 50%;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: var(--gold);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
+  transform: translateX(0);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, color 0.3s ease;
 }
-.theme-toggle--md .theme-toggle__dot { width: 22px; height: 22px; font-size: 12px; }
-.theme-toggle--sm .theme-toggle__dot { width: 18px; height: 18px; font-size: 10px; }
+.theme-toggle--md .theme-toggle__dot { width: 24px; height: 24px; }
+.theme-toggle--sm .theme-toggle__dot { width: 20px; height: 20px; }
+.theme-toggle__dot svg { width: 60%; height: 60%; }
+.theme-toggle--dark .theme-toggle__dot {
+  transform: translateX(26px);
+  background: var(--bg-dark);
+  color: var(--violet);
+}
+.theme-toggle--sm.theme-toggle--dark .theme-toggle__dot { transform: translateX(22px); }
 
 /* ── 10. Marquee ────────────────────────────────────────────── */
 .marquee {
@@ -490,8 +543,9 @@ img, canvas, svg { display: block; max-width: 100%; }
   margin-bottom: 0.625rem;
 }
 .section__h2 {
+  font-family: 'Unbounded', sans-serif;
   font-size: clamp(1.5rem, 3vw, 2.25rem);
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 2.25rem;
   line-height: 1.2;
@@ -621,25 +675,25 @@ img, canvas, svg { display: block; max-width: 100%; }
 .track-header__meta{ font-size: 0.75rem; color: var(--text-secondary); }
 
 .progress-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; max-width: 320px; }
-.progress-bar__fill { height: 100%; border-radius: 3px; background: var(--amber); transition: width 0.4s ease; }
-.progress-bar__fill--complete { background: var(--green); }
+.progress-bar__fill { height: 100%; border-radius: 3px; background: var(--ember); transition: width 0.4s ease; }
+.progress-bar__fill--complete { background: var(--teal); }
 
-.challenge-list { display: flex; flex-direction: column; gap: 0.375rem; }
+.challenge-list { display: flex; flex-direction: column; gap: 0.5rem; }
 
 .challenge-row {
   display: flex;
   align-items: center;
   gap: 0.875rem;
   padding: 0.875rem 1.125rem;
-  border-radius: 10px;
+  border-radius: 16px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: box-shadow 0.12s, opacity 0.12s;
+  transition: box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.12s;
 }
-.challenge-row:hover        { box-shadow: var(--shadow-sm); }
+.challenge-row:hover        { box-shadow: var(--shadow-md); transform: translateY(-2px); }
 .challenge-row--locked      { opacity: 0.5; cursor: not-allowed; }
-.challenge-row--locked:hover{ box-shadow: none; }
+.challenge-row--locked:hover{ box-shadow: none; transform: none; }
 .challenge-row--done        { background: var(--bg-green);  border-color: var(--border-green); }
 .challenge-row--next        { background: var(--bg-amber);  border-color: var(--border-amber); }
 .challenge-row--boss        { border-color: var(--border-amber); }

@@ -8,6 +8,7 @@ import ThemeToggle from "./theme/ThemeToggle";
 import { saveRun, getPersonalBest, saveBot, listMyBots, togglePublic, getPublicGallery, getLeaderboard } from "./api/runs";
 import { markChallengeComplete } from "./api/progress";
 import SimCanvas from "./SimCanvas";
+import MountainMark from "./BrandMark";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -453,7 +454,7 @@ export default function Sandbox() {
       {/* ── TOP NAV ── */}
       <nav className="sandbox__nav">
         <button className="nav__logo" onClick={() => navigate("/challenges")}>
-          KA<span>ROO</span>
+          <MountainMark size={20} />KAROO
         </button>
 
         <div className="sandbox__divider" />

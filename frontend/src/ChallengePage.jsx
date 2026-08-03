@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { supabase } from "./supabaseClient";
 import ThemeToggle from "./theme/ThemeToggle";
+import MountainMark from "./BrandMark";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -101,7 +102,7 @@ export default function ChallengePage({ onStartChallenge, onBack }) {
       {/* ── NAV ── */}
       <nav className="nav challenge-page__nav">
         <button className="nav__logo" onClick={onBack}>
-          KA<span>ROO</span>
+          <MountainMark size={22} />KAROO
         </button>
 
         <div className="divider" style={{ margin: "0 16px" }} />
